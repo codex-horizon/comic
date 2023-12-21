@@ -18,7 +18,7 @@ module.exports = defineConfig({
         //     console.info(config);
         // }
         config.plugin('html').tap(args => {
-            args[0].title = '✨耿次元漫画管理系统✨';
+            args[0].title = '✨耽次元漫画管理系统✨';
             return args;
         });
     }

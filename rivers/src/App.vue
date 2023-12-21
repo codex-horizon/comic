@@ -72,7 +72,5 @@ html, body, #app, .container {
 
 .container {
   border-radius: 12px;
-  box-sizing: border-box;
-  border: 1px dashed #663399;
 }
 </style>
