@@ -2,7 +2,7 @@
 import {createStore} from 'vuex';
 import messengerStore from './modules/messengerStore.js';
 
-export const store = createStore({
+export default createStore({
     strict: process.env.NODE_ENV !== 'production',
     namespaced: true,
     state() {
@@ -114,7 +114,8 @@ export const store = createStore({
         }
     },
     actions: {
-        asyncSetMenus(context, menus) {
+        asyncSetMenus(/*{ commit }, */context, menus) {
+            // commit('setMenus', menus);
             context.commit('setMenus', menus);
         }
     },

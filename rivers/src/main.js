@@ -2,15 +2,19 @@
 import {createApp} from 'vue';
 import ElementPlus from 'element-plus';
 import 'element-plus/dist/index.css';
-import '@/theme/index.scss'
+import '@/theme/index.scss';
 import * as ElementPlusIcons from '@element-plus/icons-vue';
 import App from './App.vue';
-import {store} from '@/store/index.js';
-import {router} from '@/router/index.js';
+import VuexStore from '@/store/index.js';
+import VueRouter from '@/router/index.js';
 
-const app = createApp(App);
-app.use(router).use(store).use(ElementPlus);
-for (const [key, component] of Object.entries(ElementPlusIcons)) {
-    app.component(key, component)
+/* 自定义组件全局注册 */
+import HorizonDialog from '@/components/HorizonDialog.js';
+/* 自定义组件全局注册 */
+
+const Rivers = createApp(App);
+Rivers.use(VueRouter).use(VuexStore).use(ElementPlus).use(HorizonDialog);
+for (const [componentName, component] of Object.entries(ElementPlusIcons)) {
+    Rivers.component(componentName, component);
 }
-app.mount('#app');
+Rivers.mount('#app');

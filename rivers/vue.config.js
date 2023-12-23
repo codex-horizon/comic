@@ -11,7 +11,7 @@ module.exports = defineConfig({
     //         console.info(config);
     //     }
     // },
-    chainWebpack: (config) => {
+    chainWebpack: config => {
         // if (process.env.NODE_ENV === 'production') {
         //     console.info(config);
         // } else {

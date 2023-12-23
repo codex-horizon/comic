@@ -1,4 +1,5 @@
 <template>
+  <!--******************************************* Virtual 主体 Elements Start *******************************************-->
   <div class="container">
     <div class="head-unit">
       <div class="logo">
@@ -12,17 +13,23 @@
           </span>
           <template #dropdown>
             <el-dropdown-menu>
-              <el-dropdown-item>
-                <el-icon><User /></el-icon>
+              <el-dropdown-item @click="personalInfoHandler">
+                <el-icon>
+                  <User/>
+                </el-icon>
                 <span>我的信息</span>
               </el-dropdown-item>
               <el-dropdown-item disabled>
-                <el-icon><CloseBold /></el-icon>
+                <el-icon>
+                  <CloseBold/>
+                </el-icon>
                 <span>禁用功能</span>
               </el-dropdown-item>
-              <el-dropdown-item divided>
-                <el-icon><SwitchButton /></el-icon>
-                <span>退出登入</span>
+              <el-dropdown-item divided @click="exitLogoutHandler">
+                <el-icon>
+                  <SwitchButton/>
+                </el-icon>
+                <span>退出注销</span>
               </el-dropdown-item>
             </el-dropdown-menu>
           </template>
@@ -33,13 +40,27 @@
       <MenuView/>
     </div>
     <div class="main-unit">
-<!--      <router-view/>-->
+      <router-view/>
     </div>
   </div>
+  <!--*****************************************   Virtual 主体 Elements End     *****************************************-->
+
+  <!--******************************************* Virtual 临时 Elements Start *******************************************-->
+  <HorizonDialog>
+    <!--<template v-slot:header></template>-->
+    <template v-slot:body>
+      <el-descriptions title="信息详情">
+        <el-descriptions-item label="账号">super</el-descriptions-item>
+        <el-descriptions-item label="密码">123456</el-descriptions-item>
+      </el-descriptions>
+    </template>
+  </HorizonDialog>
+  <!--*****************************************   Virtual 临时 Elements End     *****************************************-->
 </template>
 
 <script>
 import MenuView from '@/assembly/after/components/MenuView.vue';
+
 export default {
   name: "IndexView",
   data() {
@@ -50,7 +71,24 @@ export default {
   },
   props: {},
   components: {MenuView},
-  methods: {}
+  methods: {
+    personalInfoHandler() {
+      this.$store.commit('messengerStore/setDialogVisible', true);
+      this.$store.commit('messengerStore/setDialogTitle', '我的信息');
+      this.$store.commit('messengerStore/setDialogWidth', '38%');
+      this.$store.commit('messengerStore/setDialogFooter', false);
+    },
+    exitLogoutHandler() {
+      this.$message({
+        message: '退出注销成功',
+        type: 'success',
+        grouping: true,
+        center: true,
+        duration: 1000,
+        onClose: () => this.$router.push('/login.html')
+      });
+    }
+  }
 };
 </script>
 
@@ -115,6 +153,22 @@ export default {
     box-sizing: border-box;
     border-right: 1px solid #e8e8e8;
     padding-top: 64px;
+  }
+
+  .menu-unit::before {
+    content: "";
+    width: 16px;
+    height: 16px;
+    background-color: #05a9d9;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 12px;
+    position: fixed;
+    left: calc(256px - (16px / 2));
+    top: calc((64px - (16px / 2)) + 20%);
+    cursor: pointer;
+    pointer-events: auto;
   }
 
   .main-unit {

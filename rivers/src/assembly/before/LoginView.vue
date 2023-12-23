@@ -6,15 +6,15 @@
           <el-avatar :size="68" :src="avatarURL" fit="cover"/>
         </div>
       </el-form-item>
-      <el-form-item prop="username" :rules="[{required: true, message: '用户名 空', trigger: 'blur'}]">
-        <el-input v-model="form.username" placeholder="用户名" prefix-icon="User" clearable/>
+      <el-form-item prop="username" :rules="[{required: true, message: '账号 空', trigger: 'blur'}]">
+        <el-input v-model="form.username" placeholder="账号" prefix-icon="User" clearable/>
       </el-form-item>
       <el-form-item prop="password" :rules="[{required: true, message: '密码 空', trigger: 'blur'}]">
         <el-input v-model="form.password" placeholder="密码" prefix-icon="Key" show-password clearable/>
       </el-form-item>
       <el-form-item>
         <div class="form-item-authentication">
-          <el-button icon="Right" circle @click="handlerAuthentication('formRef')"/>
+          <el-button icon="Right" circle @click="handlerAuthentication('formRef')" :disabled="disabled"/>
         </div>
       </el-form-item>
     </el-form>
@@ -30,7 +30,8 @@ export default {
       form: {
         username: '',
         password: ''
-      }
+      },
+      disabled:false
     }
   },
   props: {},
@@ -41,10 +42,10 @@ export default {
       this.$refs[formName].validate(async (valid, object) => {
         console.log(valid, object);
         if (valid) {
+          this.disabled = true;
           this.$message({
             message: '登录成功',
             type: 'success',
-            showClose: true,
             grouping: true,
             center: true,
             duration: 1000,
@@ -62,7 +63,7 @@ export default {
 
 <style scoped lang="scss">
 .container {
-  background: url(@/assets/sika-deer_1920.jpg) no-repeat center;
+  background: url(@/assets/earth.jpg) no-repeat center;
   background-size: cover;
 
   display: flex;

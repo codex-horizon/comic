@@ -24,7 +24,7 @@ import {
     // PasswordModifyView
 } from './modules/router.js';
 
-export const router = createRouter({
+const router = createRouter({
     strict: true,
     history: createWebHashHistory(process.env.VUE_APP_CONTEXT_PATH),
     routes: [
@@ -190,3 +190,5 @@ router.afterEach(async (to, from, failure) => {
     // await useStore().dispatch('asyncSetBreadcrumbList', to.matched);
     console.log('全局后置守卫', to, from, failure);
 });
+
+export default router;

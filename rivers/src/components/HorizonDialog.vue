@@ -1,0 +1,61 @@
+<template>
+  <el-dialog
+      v-model="dialogVisible"
+      v-bind:before-close=" () => this.$store.commit('messengerStore/setDialogVisible', false) "
+      v-bind:title="`${dialogTitle}`"
+      v-bind:width="`${dialogWidth}`"
+      draggable>
+
+    <!--<template #header>
+      <slot name="header"/>
+    </template>-->
+
+    <template #default>
+      <slot name="body"/>
+    </template>
+
+    <!--<template #footer>
+      <slot name="footer"/>
+    </template>-->
+
+    <template v-slot:footer v-if="dialogFooter">
+      <el-button plain v-on:click=" () => this.$store.commit('messengerStore/setDialogVisible', false) ">取&nbsp;消
+      </el-button>
+      <el-button type="primary" plain v-on:click=" () => this.$store.commit('messengerStore/setDialogVisible', false) ">
+        确&nbsp;认
+      </el-button>
+    </template>
+
+  </el-dialog>
+</template>
+<script>
+export default {
+  name: 'HorizonDialog',
+  computed: {
+    // 函数形式的计算属性
+    dialogWidth: function () {
+      return this.$store.getters['messengerStore/getDialogWidth'];
+    },
+    dialogTitle: function () {
+      return this.$store.getters['messengerStore/getDialogTitle'];
+    },
+    dialogFooter: function () {
+      return this.$store.getters['messengerStore/getDialogFooter'];
+    },
+    // 对象形式的计算属性
+    dialogVisible: {
+      get: function () {
+        return this.$store.getters['messengerStore/getDialogVisible'];
+      },
+      set: function (newValue) {
+        this.$store.commit('messengerStore/setDialogVisible', newValue);
+      }
+    }
+  }
+}
+</script>
+<style lang="scss">
+.el-dialog {
+  border-radius: 12px;
+}
+</style>
