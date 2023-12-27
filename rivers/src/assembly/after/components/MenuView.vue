@@ -1,24 +1,14 @@
 <template>
   <div class="module-container">
     <ul class="menu-list">
-      <li class="menu-item">
+      <li class="menu-item" v-for="(menu,index) in menus" :key="index">
         <div class="menu-item-layout">
-          <router-link to="#">主页</router-link>
-        </div>
-      </li>
-      <li class="menu-item">
-        <div class="menu-item-layout">
-          <router-link to="#">漫画编辑</router-link>
-        </div>
-      </li>
-      <li class="menu-item">
-        <div class="menu-item-layout">
-          <router-link to="#">漫画列表</router-link>
-        </div>
-      </li>
-      <li class="menu-item">
-        <div class="menu-item-layout">
-          <router-link to="#">账号管理</router-link>
+          <router-link :to="menu.route">
+            <el-icon>
+              <component :is="menu.icon"/>
+            </el-icon>
+            <span class="menu-name" v-html="menu.name"/>
+          </router-link>
         </div>
       </li>
     </ul>
@@ -30,7 +20,34 @@
 export default {
   name: "MenuView",
   data() {
-    return {}
+    return {
+      menus: [
+        {
+          name:'主&#12288;&#12288;页',
+          route: '/home.html',
+          icon: 'House'
+        },
+        {
+          name: '漫画编辑',
+          route: '/comicEditor.html',
+          icon: 'EditPen'
+        },
+        {
+          name: '漫画列表',
+          route: '/comics.html',
+          icon: 'Operation'
+        },
+        {
+          name: '账号管理',
+          route: '/account.html',
+          icon: 'User'
+        }, {
+          name: '权限分配',
+          route: '/permission.html',
+          icon: 'Connection'
+        }
+      ]
+    }
   },
   props: {},
   components: {},
@@ -48,7 +65,7 @@ export default {
   }
 
   .menu-item {
-    padding: 16px 28px 0;
+    padding: 16px 16px 0;
 
 
     .menu-item-layout {
@@ -56,6 +73,10 @@ export default {
       height: 35px;
       background-color: #f0f4ff;
       border-radius: 12px;
+
+      .menu-name {
+        margin-left: 6px;
+      }
 
       :deep(a) {
         font-weight: bold;
@@ -70,6 +91,9 @@ export default {
       }
     }
 
+    .menu-item-layout:hover {
+
+    }
   }
 
 }

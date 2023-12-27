@@ -19,6 +19,7 @@
     </template>-->
 
     <template v-slot:footer v-if="dialogFooter">
+      <!--<slot name="footer"/>-->
       <el-button plain v-on:click=" () => this.$store.commit('messengerStore/setDialogVisible', false) ">取&nbsp;消
       </el-button>
       <el-button type="primary" plain v-on:click=" () => this.$store.commit('messengerStore/setDialogVisible', false) ">

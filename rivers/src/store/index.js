@@ -100,23 +100,35 @@ export default createStore({
                         },
                     ]
                 },
-            ]
+            ],
+            breadcrumbs: []
         }
     },
     getters: {
         getMenus(state) {
             return state.menus;
+        },
+        getBreadcrumbs(state) {
+            return state.breadcrumbs;
         }
     },
     mutations: {
         setMenus(state, menus) {
             state.menus = menus;
+        },
+        setBreadcrumbs(state, breadcrumbs) {
+            state.breadcrumbs = breadcrumbs
         }
     },
     actions: {
-        asyncSetMenus(/*{ commit }, */context, menus) {
-            // commit('setMenus', menus);
+        asyncSetMenus(context, menus) {
             context.commit('setMenus', menus);
+        },
+        asyncSetBreadcrumbs({commit}, breadcrumbs) {
+            // const filteredBreadcrumbs = breadcrumbs.filter(breadcrumb => {
+            //     return breadcrumb.redirect === undefined;
+            // });
+            commit('setBreadcrumbs', breadcrumbs);
         }
     },
     modules: {

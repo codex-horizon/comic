@@ -1,28 +1,11 @@
 <template>
-  <div class="module-container">
-    1
-  </div>
+  <el-empty :image-size="200" description="暂无数据"/>
 </template>
-
 <script>
-
 export default {
-  name: "HomeView",
-  data() {
-    return {
-    }
-  },
-  props: {},
-  components: {
-
-  },
-  methods: {
-
-  }
+  name: "HomeView"
 };
 </script>
-
 <style scoped lang="scss">
-.module-container {
-}
+
 </style>

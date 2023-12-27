@@ -28,8 +28,8 @@ export default {
     return {
       avatarURL: require('@/assets/avatar.jpeg'),
       form: {
-        username: '',
-        password: ''
+        username: 'admin',
+        password: '123456'
       },
       disabled:false
     }
@@ -39,8 +39,7 @@ export default {
   watch: {},
   methods: {
     handlerAuthentication(formName) {
-      this.$refs[formName].validate(async (valid, object) => {
-        console.log(valid, object);
+      this.$refs[formName].validate(async valid => {
         if (valid) {
           this.disabled = true;
           this.$message({

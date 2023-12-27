@@ -7,6 +7,14 @@
         <span class="title">耽次元漫画</span>
       </div>
       <div class="toolbar">
+        <div class="breadcrumb">
+          <el-breadcrumb separator-icon="ArrowRight">
+            <el-breadcrumb-item v-for="(breadcrumb, index) in this.$store.getters.getBreadcrumbs"
+                                :to="{path: breadcrumb.path}" :key="index">
+              <span>{{ breadcrumb.meta.title }}</span>
+            </el-breadcrumb-item>
+          </el-breadcrumb>
+        </div>
         <el-dropdown trigger="click">
           <span class="dropdown-link">
             <el-avatar :size="48" :src="avatarURL" fit="cover"/>
@@ -46,7 +54,7 @@
   <!--*****************************************   Virtual 主体 Elements End     *****************************************-->
 
   <!--******************************************* Virtual 临时 Elements Start *******************************************-->
-  <HorizonDialog>
+  <HorizonDialog v-if="this.$options.name === this.$store.getters['messengerStore/getDialogCurrentView']">
     <!--<template v-slot:header></template>-->
     <template v-slot:body>
       <el-descriptions title="信息详情">
@@ -73,6 +81,7 @@ export default {
   components: {MenuView},
   methods: {
     personalInfoHandler() {
+      this.$store.commit('messengerStore/setDialogCurrentView', this.$options.name);
       this.$store.commit('messengerStore/setDialogVisible', true);
       this.$store.commit('messengerStore/setDialogTitle', '我的信息');
       this.$store.commit('messengerStore/setDialogWidth', '38%');
@@ -98,6 +107,7 @@ export default {
 
   .head-unit {
     position: fixed;
+    z-index: 9;
     top: 0;
     left: 0;
     right: 0;
@@ -134,11 +144,19 @@ export default {
     .toolbar {
       flex: 1 1 auto;
       display: flex;
-      justify-content: right;
+      justify-content: space-between;
       align-items: center;
       width: 100%;
       height: 100%;
       padding-right: 12px;
+
+      .breadcrumb{
+        height: 100%;
+        width: auto;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
 
       .dropdown-link {
         cursor: pointer;
@@ -159,23 +177,40 @@ export default {
     content: "";
     width: 16px;
     height: 16px;
-    background-color: #05a9d9;
+    background: url(@/assets/arrowhead.svg) no-repeat center, linear-gradient(0deg, #ffffff, #ffffff);
+    background-size: cover;
     display: flex;
     justify-content: center;
     align-items: center;
     border-radius: 12px;
     position: fixed;
+    z-index: 1;
     left: calc(256px - (16px / 2));
-    top: calc((64px - (16px / 2)) + 20%);
+    top: calc((64px - (16px / 2)) + 80%);
     cursor: pointer;
-    pointer-events: auto;
+    transform: rotate(90deg);
+    box-shadow: 0 0 18px -2px #6a75ca;
+    border: 1px dashed #6a75ca;
+    box-sizing: border-box;
   }
 
   .main-unit {
     flex: 1 1 auto;
-    background-color: #f5f5f5;
+    background-color: #ffffff;
     overflow: auto;
     padding-top: 64px;
+
+    :deep(.el-breadcrumb) {
+      padding: 16px 16px 0;
+    }
+
+    :deep(.el-breadcrumb__inner > *) {
+      font-size: 14px !important;
+    }
+
+    :deep(.el-breadcrumb__separator) {
+      position: unset;
+    }
   }
 }
 </style>

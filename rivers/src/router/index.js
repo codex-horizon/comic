@@ -1,27 +1,14 @@
 'use strict';
-// import {useStore} from 'vuex';
+import {useStore} from 'vuex';
 import {createRouter, createWebHashHistory} from 'vue-router';
 import {
     LoginView,
     IndexView,
     HomeView,
-    //
-    // FuncCategoryView,
-    // ActiveUsersView,
-    // UserLotteryRecordsView,
-    // CustomerServiceConfigView,
-    // AreaCodeListView,
-    // UserManagementView,
-    // AuthorityManagementView,
-    //
-    // SystemManagementView,
-    // UsersManagementView,
-    // PlatformManagementView,
-    // MenuManagementView,
-    //
-    // PersonalView,
-    // PersonalInformationView,
-    // PasswordModifyView
+    ComicEditorView,
+    ComicsView,
+    AccountView,
+    PermissionView
 } from './modules/router.js';
 
 const router = createRouter({
@@ -54,113 +41,35 @@ const router = createRouter({
                     path: '/home.html',
                     name: HomeView.name,
                     component: HomeView
-                }/*, {
+                },{
                     meta: {
-                        title: '功能类别'
+                        title: '漫画编辑'
                     },
-                    path: '/funcCategory',
-                    name: FuncCategoryView.name,
-                    component: FuncCategoryView,
-                    redirect: '/activeUsers.html',
-                    children: [
-                        {
-                            meta: {
-                                title: '活动用户'
-                            },
-                            path: '/activeUsers.html',
-                            name: ActiveUsersView.name,
-                            component: ActiveUsersView
-                        }, {
-                            meta: {
-                                title: '用户抽奖记录'
-                            },
-                            path: '/userLotteryRecords.html',
-                            name: UserLotteryRecordsView.name,
-                            component: UserLotteryRecordsView
-                        }, {
-                            meta: {
-                                title: '客服配置'
-                            },
-                            path: '/customerServiceConfig.html',
-                            name: CustomerServiceConfigView.name,
-                            component: CustomerServiceConfigView
-                        }, {
-                            meta: {
-                                title: '区号列表'
-                            },
-                            path: '/areaCodeList.html',
-                            name: AreaCodeListView.name,
-                            component: AreaCodeListView
-                        }, {
-                            meta: {
-                                title: '用户管理'
-                            },
-                            path: '/userManagement.html',
-                            name: UserManagementView.name,
-                            component: UserManagementView
-                        }, {
-                            meta: {
-                                title: '权限管理'
-                            },
-                            path: '/authorityManagement.html',
-                            name: AuthorityManagementView.name,
-                            component: AuthorityManagementView
-                        }
-                    ]
-                }, {
+                    path: '/comicEditor.html',
+                    name: ComicEditorView.name,
+                    component: ComicEditorView
+                },{
                     meta: {
-                        title: '系统管理'
+                        title: '漫画列表'
                     },
-                    path: '/systemManagement',
-                    name: SystemManagementView.name,
-                    component: SystemManagementView,
-                    redirect: '/usersManagement.html',
-                    children: [{
-                        meta: {
-                            title: '用户管理'
-                        },
-                        path: '/usersManagement.html',
-                        name: UsersManagementView.name,
-                        component: UsersManagementView
-                    }, {
-                        meta: {
-                            title: '平台管理'
-                        },
-                        path: '/platformManagement.html',
-                        name: PlatformManagementView.name,
-                        component: PlatformManagementView
-                    }, {
-                        meta: {
-                            title: '菜单管理'
-                        },
-                        path: '/menuManagement.html',
-                        name: MenuManagementView.name,
-                        component: MenuManagementView
-                    }]
-                }, {
+                    path: '/comics.html',
+                    name: ComicsView.name,
+                    component: ComicsView
+                },{
                     meta: {
-                        title: '个人中心'
+                        title: '账号管理'
                     },
-                    path: '/personal',
-                    name: PersonalView.name,
-                    component: PersonalView,
-                    redirect: '/personalInformation.html',
-                    children: [{
-                        meta: {
-                            title: '个人信息'
-                        },
-                        path: '/personalInformation.html',
-                        name: PersonalInformationView.name,
-                        component: PersonalInformationView
-                    }, {
-                        meta: {
-                            title: '密码修改'
-                        },
-                        path: '/passwordModify.html',
-                        name: PasswordModifyView.name,
-                        component: PasswordModifyView
-                    }]
-                }*/
+                    path: '/account.html',
+                    name: AccountView.name,
+                    component: AccountView
+                },{
+                    meta: {
+                        title: '权限分配'
+                    },
+                    path: '/permission.html',
+                    name: PermissionView.name,
+                    component: PermissionView
+                }
             ]
         }
     ]
@@ -187,7 +96,7 @@ router.beforeResolve(async (to, from, next) => {
  * Router.afterEach 对于分析、更改页面标题、声明页面等辅助功能以及许多其他事情都很有用。
  */
 router.afterEach(async (to, from, failure) => {
-    // await useStore().dispatch('asyncSetBreadcrumbList', to.matched);
+    await useStore().dispatch('asyncSetBreadcrumbs', to.matched);
     console.log('全局后置守卫', to, from, failure);
 });
 
