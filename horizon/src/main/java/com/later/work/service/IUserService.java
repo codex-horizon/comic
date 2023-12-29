@@ -15,4 +15,6 @@ public interface IUserService {
     Long add(UserBo userBo);
 
     Long update(UserBo userBo);
+
+    Object login(UserBo userBo);
 }

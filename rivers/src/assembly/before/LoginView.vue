@@ -28,8 +28,8 @@ export default {
     return {
       avatarURL: require('@/assets/avatar.jpeg'),
       form: {
-        username: 'admin',
-        password: '123456'
+        username: '',
+        password: ''
       },
       disabled:false
     }

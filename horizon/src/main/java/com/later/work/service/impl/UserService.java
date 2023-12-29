@@ -62,16 +62,28 @@ public class UserService implements IUserService {
         UserEntity userEntity = new UserEntity();
         userEntity.setUsername(userBo.getUsername());
         if (iUserRepository.exists(Example.of(userEntity))) {
-            throw new BizException(Constants.BizStatus.User_Exists);
+            throw new BizException(Constants.BizStatus.User_Not_Exists);
         }
         return iUserRepository.save(iConverter.convert(userBo, UserEntity.class)).getId();
     }
 
     @Override
     public Long update(UserBo userBo) {
-        UserEntity userEntity = iUserRepository.findById(userBo.getId()).orElseThrow(() -> new BizException(Constants.BizStatus.User_Exists));
+        UserEntity userEntity = iUserRepository.findById(userBo.getId()).orElseThrow(() -> new BizException(Constants.BizStatus.User_Not_Exists));
         userEntity.setPassword(userBo.getPassword());
         return iUserRepository.save(userEntity).getId();
+    }
+
+    @Override
+    public Object login(UserBo userBo) {
+        UserEntity userEntity = new UserEntity();
+        userEntity.setUsername(userBo.getUsername());
+        userEntity.setPassword(userBo.getPassword());
+//        if(iUserRepository.exists(Example.of(userEntity))){
+//        }
+//        Long id = iUserRepository.findOne(Example.of(userEntity)).orElseThrow(() -> new BizException(Constants.BizStatus.User_Not_Exists)).getId();
+//        throw new BizException(Constants.BizStatus.User_Not_Exists);
+        return iUserRepository.exists(Example.of(userEntity));
     }
 
 }

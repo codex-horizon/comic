@@ -19,7 +19,14 @@ public class UserDto implements Serializable {
 
     @NotBlank(message = "username 空", groups = {
             GroupValidator.Create.class,
-            GroupValidator.Modify.class
+            GroupValidator.Login.class
+    })
+    private String username;
+
+    @NotBlank(message = "username 空", groups = {
+            GroupValidator.Create.class,
+            GroupValidator.Modify.class,
+            GroupValidator.Login.class
     })
     private String password;
 }

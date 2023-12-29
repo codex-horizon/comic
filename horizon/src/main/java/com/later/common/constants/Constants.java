@@ -58,8 +58,7 @@ public class Constants {
         Sso_Client_Details_Not_Exists("Sso_Client_Details_Not_Found", "Sso客户端详情不存在"),
         Sso_User_Details_Not_Exists("Sso_User_Details_Not_Found", "Sso用户详情不存在"),
 
-
-        User_Exists("User_Exists", "用户已存在"),
+        User_Not_Exists("User_Not_Exists", "用户已存在"),
 
         ;
 

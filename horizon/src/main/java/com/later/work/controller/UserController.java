@@ -46,4 +46,9 @@ public class UserController {
         return IResult.Result.succeeded(iUserService.update(iConverter.convert(userDto, UserBo.class)));
     }
 
+    @RequestMapping(name = "用户添加", path = "/login", method = RequestMethod.POST)
+    IResult<?> login(@RequestBody @Validated(GroupValidator.Login.class) UserDto userDto) {
+        return IResult.Result.succeeded(iUserService.login(iConverter.convert(userDto, UserBo.class)));
+    }
+
 }

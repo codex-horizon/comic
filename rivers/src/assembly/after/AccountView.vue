@@ -40,14 +40,16 @@
       <template v-slot:body>
         <el-form class="login" status-icon :model="form" ref="formRef">
           <el-form-item prop="username" :rules="[{required: true, message: '账号 空', trigger: 'blur'}]">
-            <el-input v-model="form.username" disabled placeholder="账号" prefix-icon="User" clearable/>
+            <el-input v-model="form.username" placeholder="账号" prefix-icon="User" clearable/>
           </el-form-item>
           <el-form-item prop="password" :rules="[{required: true, message: '密码 空', trigger: 'blur'}]">
             <el-input v-model="form.password" placeholder="密码" prefix-icon="Key" show-password clearable/>
           </el-form-item>
           <el-form-item>
-            <el-button v-if="currentAction === 'add'" type="primary" icon="Plus" circle plain @click="onAddHandler('formRef')" :disabled="disabled"/>
-            <el-button v-if="currentAction === 'editor'" type="primary" icon="EditPen" circle plain @click="onEditorHandler('formRef')" :disabled="disabled"/>
+            <el-button v-if="currentAction === 'add'" type="primary" icon="Plus" circle plain
+                       @click="onAddHandler('formRef')" :disabled="disabled"/>
+            <el-button v-if="currentAction === 'editor'" type="primary" icon="EditPen" circle plain
+                       @click="onEditorHandler('formRef')" :disabled="disabled"/>
           </el-form-item>
         </el-form>
       </template>
@@ -63,7 +65,7 @@ export default {
   name: 'AccountView',
   data() {
     return {
-      currentAction:'',
+      currentAction: '',
       form: {
         id: '',
         username: '',
@@ -105,6 +107,7 @@ export default {
             this.disabled = false;
             if ('Biz_Ok_Response' === res.code) {
               this.$message.success('更新成功。');
+              this.onSearchQuery();
               this.$store.commit('messengerStore/setDialogVisible', false);
             }
             if ('Biz_Failed_Response' === res.code) {
@@ -121,15 +124,20 @@ export default {
       this.$store.commit('messengerStore/setDialogWidth', '46%');
       this.$store.commit('messengerStore/setDialogFooter', false);
       this.currentAction = 'add';
+      this.form.id = '';
+      this.form.username = '';
+      this.form.password = '';
     },
     onAddHandler(formName) {
       this.$refs[formName].validate(async valid => {
-        if (this.disabled === valid) {
+        if (valid) {
+          this.disabled = true;
           userApi.add(this.form).then(res => {
+            this.disabled = false;
             if ('Biz_Ok_Response' === res.code) {
               this.$message.success('新增成功。');
+              this.onSearchQuery();
               this.$store.commit('messengerStore/setDialogVisible', false);
-
             }
             if ('Biz_Failed_Response' === res.code) {
               this.$message.error(res.message);
