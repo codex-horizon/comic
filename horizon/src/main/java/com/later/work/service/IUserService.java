@@ -13,4 +13,6 @@ public interface IUserService {
     IPageable<List<UserVo>> list(UserQry userQry);
 
     Long add(UserBo userBo);
+
+    Long update(UserBo userBo);
 }

@@ -37,9 +37,13 @@ public class UserController {
     }
 
     @RequestMapping(name = "用户添加", path = "/add", method = RequestMethod.POST)
-    IResult<Long> add(@RequestBody @Validated(GroupValidator.Create.class)  UserDto userDto) {
+    IResult<Long> add(@RequestBody @Validated(GroupValidator.Create.class) UserDto userDto) {
         return IResult.Result.succeeded(iUserService.add(iConverter.convert(userDto, UserBo.class)));
     }
 
+    @RequestMapping(name = "用户更新", path = "/update", method = RequestMethod.POST)
+    IResult<Long> update(@RequestBody @Validated(GroupValidator.Modify.class) UserDto userDto) {
+        return IResult.Result.succeeded(iUserService.update(iConverter.convert(userDto, UserBo.class)));
+    }
 
 }

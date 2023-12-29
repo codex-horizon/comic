@@ -12,4 +12,9 @@ export const userApi = {
             'Content-Type':'application/json;charset=utf-8'
         });
     },
+    update(data) {
+        return post('/user/update', {}, data, {
+            'Content-Type':'application/json;charset=utf-8'
+        });
+    },
 };

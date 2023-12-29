@@ -67,4 +67,11 @@ public class UserService implements IUserService {
         return iUserRepository.save(iConverter.convert(userBo, UserEntity.class)).getId();
     }
 
+    @Override
+    public Long update(UserBo userBo) {
+        UserEntity userEntity = iUserRepository.findById(userBo.getId()).orElseThrow(() -> new BizException(Constants.BizStatus.User_Exists));
+        userEntity.setPassword(userBo.getPassword());
+        return iUserRepository.save(userEntity).getId();
+    }
+
 }
