@@ -10,7 +10,7 @@ import java.sql.Timestamp;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
-public class ComicVo extends AbstractVoEntity implements Serializable {
+public class UserVo extends AbstractVoEntity implements Serializable {
 
     private static final long serialVersionUUID = 1L;
 

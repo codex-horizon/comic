@@ -6,8 +6,8 @@ import lombok.EqualsAndHashCode;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
-public class ComicQry extends PageableQry {
+public class UserQry extends PageableQry {
 
-    private String name;
+    private String username;
 
 }

@@ -1,6 +1,5 @@
 package com.later.work.service.impl;
 
-
 import com.later.common.converter.IConverter;
 import com.later.common.restful.IPageable;
 import com.later.common.restful.PageableQry;
@@ -18,6 +17,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
+import javax.persistence.criteria.Predicate;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -36,18 +37,24 @@ public class ComicService implements IComicService {
     @Override
     public IPageable<List<ComicVo>> list(ComicQry comicQry) {
         Specification<ComicEntity> specification = (root, criteriaQuery, criteriaBuilder) -> {
-            List<PageableQry.SimpleConditions<?>> conditions = comicQry.getConditions();
-            if (StringUtils.hasText(comicQry.getUsername())) {
-                criteriaBuilder.equal(root.get("username"), comicQry.getUsername());
+            List<Predicate> predicates = new ArrayList<>();
+            if (StringUtils.hasText(comicQry.getName())) {
+                predicates.add(criteriaBuilder.like(root.get("name"), "%" + comicQry.getName() + "%"));
             }
-            return criteriaBuilder.conjunction();
+//            if (StringUtils.hasText(comicQry.getName())) {
+//                criteriaBuilder.like(root.get("name"), "%" + comicQry.getName() + "%");
+//            }
+            if (predicates.isEmpty()) {
+                return criteriaBuilder.conjunction();
+            } else {
+                return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
+            }
+//            return criteriaBuilder.conjunction();
         };
         Page<ComicEntity> comicEntities = iComicRepository.findAll(specification, PageRequest.of(
                 comicQry.getCurrentIndex(),
-                comicQry.getPageableSize(),
-                StringUtils.hasText(comicQry.getDirection()) ? Sort.Direction.fromString(comicQry.getDirection()) : Sort.Direction.DESC,
-                CollectionUtils.isEmpty(comicQry.getProperties()) ? String.join(",", comicQry.getProperties()) : "lastModifiedDate"
-        ));
+                comicQry.getPageableSize(), Sort.Direction.DESC, "lastModifiedDate")
+        );
         return IPageable.Pageable.response(comicEntities.getTotalElements(), iConverter.convert(comicEntities, ComicVo.class));
     }
 
