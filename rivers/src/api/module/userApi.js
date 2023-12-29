@@ -2,7 +2,14 @@
 import {post} from '@/utils';
 
 export const userApi = {
-    fetchAuthentication(data) {
-        return post('/user/authentication', '', data, {});
-    }
+    fetchPageable(qry) {
+        return post('/user/list', {}, qry, {
+            'Content-Type':'application/json;charset=utf-8'
+        });
+    },
+    add(data) {
+        return post('/user/add', {}, data, {
+            'Content-Type':'application/json;charset=utf-8'
+        });
+    },
 };

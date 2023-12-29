@@ -18,10 +18,10 @@ public class UserEntity extends AbstractPoEntity implements Serializable {
 
     private static final long serialVersionUUID = 1L;
 
-    @Column(name = "username", columnDefinition = "varchar(256) comment '账户'")
+    @Column(name = "username", nullable = false, columnDefinition = "varchar(256) comment '账户'")
     private String username;
 
-    @Column(name = "password", columnDefinition = "varchar(256) comment '密码'")
+    @Column(name = "password", nullable = false, columnDefinition = "varchar(256) comment '密码'")
     private String password;
 
 }

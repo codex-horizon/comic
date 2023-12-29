@@ -3,37 +3,25 @@
     <div class="search-layout">
       <div class="search-title"/>
       <el-form :inline="true" :model="formSearch">
-        <el-form-item label="漫画名称：">
-          <el-input v-model="formSearch.name" placeholder="漫画名称"/>
+        <el-form-item label="账户名称：">
+          <el-input v-model="formSearch.username" placeholder="账户名称"/>
         </el-form-item>
 
         <el-form-item>
           <el-button type="primary" icon="Search" circle @click="onSearchQuery"/>
+          <el-button type="primary" icon="Plus" circle plain @click="onPreAdd"/>
         </el-form-item>
       </el-form>
     </div>
     <div class="table-layout">
-      <el-table :data="tableData" style="width: 100%" height="440"
-                :default-sort="{ prop: 'comicId', order: 'descending' }">
-        <el-table-column fixed sortable prop="comicId" label="漫画识别号" width="200"/>
-        <el-table-column prop="name" label="漫画名称" width="200"/>
-        <el-table-column prop="pic" label="竖版封面" width="200">
-          <template #default="scope">
-            <el-image :src="`http://image.fm1100.com/${scope.row.pic}`" fit="cover"/>
-          </template>
-        </el-table-column>
-        <el-table-column prop="picx" label="横版封面" width="200">
-          <template #default="scope">
-            <el-image :src="`http://image.fm1100.com/${scope.row.picx}`" fit="cover"/>
-          </template>
-        </el-table-column>
-        <el-table-column prop="author" label="漫画作者" width="200"/>
-        <el-table-column prop="serialize" label="连载状态" width="200"/>
-        <el-table-column prop="uptime" label="更新日期" width="200">
-          <template #default="scope">
-            <el-date-picker v-model="scope.row.uptime" type="datetime" disabled size="small" style="width: 160px;"/>
-          </template>
-        </el-table-column>
+      <el-table :data="tableData" style="width: 100%" height="440" >
+        <el-table-column prop="id" label="标识" width="200"/>
+        <el-table-column prop="username" label="账号" width="200"/>
+        <el-table-column prop="password" label="密码" width="200"/>
+        <el-table-column prop="createdBy" label="创建人" width="200"/>
+        <el-table-column prop="createdDate" label="创建时间" width="200"/>
+        <el-table-column prop="lastModifiedBy" label="最后修改人" width="200"/>
+        <el-table-column prop="lastModifiedDate" label="最后修改时间" width="200"/>
         <el-table-column fixed="right" label="操作" width="120">
           <template #default>
             <el-button link type="primary" size="small">编辑</el-button>
@@ -50,6 +38,17 @@
     <HorizonDialog v-if="this.$options.name === this.$store.getters['messengerStore/getDialogCurrentView']">
       <!--<template v-slot:header></template>-->
       <template v-slot:body>
+        <el-form class="login" status-icon :model="form" ref="formRef">
+          <el-form-item prop="username" :rules="[{required: true, message: '账号 空', trigger: 'blur'}]">
+            <el-input v-model="form.username" placeholder="账号" prefix-icon="User" clearable/>
+          </el-form-item>
+          <el-form-item prop="password" :rules="[{required: true, message: '密码 空', trigger: 'blur'}]">
+            <el-input v-model="form.password" placeholder="密码" prefix-icon="Key" show-password clearable/>
+          </el-form-item>
+          <el-form-item>
+            <el-button type="primary" icon="Plus" circle plain @click="onAdd('formRef')" :disabled="disabled"/>
+          </el-form-item>
+        </el-form>
       </template>
       <!--<template v-slot:footer></template>-->
     </HorizonDialog>
@@ -57,13 +56,19 @@
 </template>
 <script>
 import {comicApi} from '@/api/index.js';
+import {userApi} from "@/api/index.js";
 
 export default {
   name: 'AccountView',
   data() {
     return {
+      form: {
+        username: '',
+        password: ''
+      },
+      disabled: false,
       formSearch: {
-        name: ''
+        username: ''
       },
       tableData: [],
       pageableQry: {
@@ -77,6 +82,29 @@ export default {
     }
   },
   methods: {
+    onPreAdd() {
+      this.$store.commit('messengerStore/setDialogCurrentView', this.$options.name);
+      this.$store.commit('messengerStore/setDialogVisible', true);
+      this.$store.commit('messengerStore/setDialogTitle', '账户新增');
+      this.$store.commit('messengerStore/setDialogWidth', '46%');
+      this.$store.commit('messengerStore/setDialogFooter', false);
+    },
+    onAdd(formName) {
+      this.$refs[formName].validate(async valid => {
+        if (valid) {
+          userApi.add(this.form).then(res => {
+            if ('Biz_Ok_Response' === res.code) {
+              this.$message.success('新增成功。');
+              this.$store.commit('messengerStore/setDialogVisible', false);
+
+            }
+            if ('Biz_Failed_Response' === res.code) {
+              this.$message.error(res.message);
+            }
+          });
+        }
+      });
+    },
     onSearchQuery() {
       this.fetchPageable();
     },
@@ -87,7 +115,7 @@ export default {
     fetchPageable() {
       Object.assign(this.pageableQry, this.formSearch);
       console.log(this.pageableQry);
-      comicApi.fetchPageable(this.pageableQry).then(res => {
+      userApi.fetchPageable(this.pageableQry).then(res => {
         this.pageableQry.total = res.data.total;
         this.tableData = res.data.list;
       })
@@ -134,6 +162,10 @@ export default {
       justify-content: right;
       align-items: center;
     }
+  }
+
+  :deep(.el-form-item:last-child > .el-form-item__content) {
+    justify-content: right;
   }
 }
 </style>

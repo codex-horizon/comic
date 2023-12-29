@@ -1,12 +1,16 @@
 package com.later.work.service.impl;
 
+import com.later.common.constants.Constants;
 import com.later.common.converter.IConverter;
+import com.later.common.exception.BizException;
 import com.later.common.restful.IPageable;
+import com.later.work.bo.UserBo;
 import com.later.work.entity.UserEntity;
 import com.later.work.qry.UserQry;
 import com.later.work.repository.IUserRepository;
 import com.later.work.service.IUserService;
 import com.later.work.vo.UserVo;
+import org.springframework.data.domain.Example;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -51,6 +55,16 @@ public class UserService implements IUserService {
                 "lastModifiedDate"
         ));
         return IPageable.Pageable.response(userEntities.getTotalElements(), iConverter.convert(userEntities, UserVo.class));
+    }
+
+    @Override
+    public Long add(UserBo userBo) {
+        UserEntity userEntity = new UserEntity();
+        userEntity.setUsername(userBo.getUsername());
+        if (iUserRepository.exists(Example.of(userEntity))) {
+            throw new BizException(Constants.BizStatus.User_Exists);
+        }
+        return iUserRepository.save(iConverter.convert(userBo, UserEntity.class)).getId();
     }
 
 }
