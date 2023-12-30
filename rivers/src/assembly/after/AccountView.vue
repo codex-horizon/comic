@@ -17,7 +17,6 @@
       <el-table :data="tableData" style="width: 100%" height="440">
         <el-table-column fixed prop="id" label="标识" width="200"/>
         <el-table-column prop="username" label="账号" width="200"/>
-        <el-table-column prop="password" label="密码" width="200"/>
         <el-table-column prop="role" label="角色名称" width="200">
           <template #default="scope">
             <el-tag type="info">
@@ -25,6 +24,16 @@
             </el-tag>
           </template>
         </el-table-column>
+        <el-table-column prop="comics" label="漫画集" width="260">
+          <template #default="scope">
+              <el-tag v-for="({ name, pic }, index) in scope.row.comics" :key="index" class="text-avatar">
+                <el-avatar v-if="pic" size="small" :src="`http://image.fm1100.com/${pic}`" />
+                <el-avatar v-else size="small">{{name.charAt(0)}} </el-avatar>
+                <span v-html="name" style="margin-left: 8px;"></span>
+              </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column prop="password" label="密码" width="200"/>
         <el-table-column prop="createdBy" label="创建人" width="200"/>
         <el-table-column prop="createdDate" label="创建时间" width="200"/>
         <el-table-column prop="lastModifiedBy" label="最后修改人" width="200"/>
@@ -58,6 +67,17 @@
               <el-option v-for="({id, name}, index) in roles" :key="index" :label="name" :value="id"/>
             </el-select>
           </el-form-item>
+          <el-form-item prop="comicIds" :rules="[{required: true, message: '漫画集 空', trigger: 'blur'}]">
+            <el-select v-model="form.comicIds" placeholder="漫画集" prefix-icon="MilkTea" multiple clearable>
+              <el-option v-for="({id, name, pic}, index) in comics" :key="index" :label="name" :value="id">
+                <template #default>
+                  <el-avatar v-if="pic" size="small" :src="`http://image.fm1100.com/${pic}`" />
+                  <el-avatar v-else size="small">{{name.charAt(0)}} </el-avatar>
+                  <span v-html="name" style="margin-left: 8px;"></span>
+                </template>
+              </el-option>
+            </el-select>
+          </el-form-item>
           <el-form-item>
             <el-button v-if="currentAction === 'add'" type="primary" icon="Plus" circle plain
                        @click="onAddHandler('formRef')" :disabled="disabled"/>
@@ -71,7 +91,7 @@
   </div>
 </template>
 <script>
-import {userApi, roleApi, menuApi} from "@/api/index.js";
+import {userApi, roleApi, comicApi} from "@/api/index.js";
 
 export default {
   name: 'AccountView',
@@ -82,9 +102,11 @@ export default {
         id: '',
         username: '',
         password: '',
-        roleId: ''
+        roleId: '',
+        comicIds:[]
       },
       roles: [],
+      comics:[],
       disabled: false,
       formSearch: {
         username: ''
@@ -123,6 +145,8 @@ export default {
       this.form.id = editor.id;
       this.form.username = editor.username;
       this.form.password = editor.password;
+      this.form.roleId = editor.role.id;
+      this.form.comicIds = editor.comics.map(comic => comic.id);
     },
     onEditorHandler(formName) {
       this.$refs[formName].validate(async valid => {
@@ -191,9 +215,15 @@ export default {
         this.roles = res.data;
       })
     },
+    fetchComicList(){
+      comicApi.fetchList({}).then(res => {
+        this.comics = res.data;
+      })
+    },
     initialize() {
       this.fetchPageable();
       this.fetchRoleList();
+      this.fetchComicList();
     }
   },
   mounted() {
@@ -242,6 +272,16 @@ export default {
 
   :deep(.el-select, .el-input-number) {
     width: 100%;
+  }
+
+  .text-avatar, :deep(.el-tag__content), :deep(.el-select-dropdown__item){
+    display: flex;
+    justify-content: left;
+    align-items: center;
+  }
+
+  :deep(.el-tag){
+    margin:0 0 2px;
   }
 }
 </style>

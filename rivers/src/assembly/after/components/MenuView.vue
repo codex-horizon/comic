@@ -28,19 +28,9 @@ export default {
           icon: 'House'
         },
         {
-          name: '漫画编辑',
-          route: '/comicEditor.html',
-          icon: 'EditPen'
-        },
-        {
           name: '漫画列表',
           route: '/comics.html',
           icon: 'Operation'
-        },
-        {
-          name: '漫画权限',
-          route: '/comicPermission.html',
-          icon: 'Connection'
         },
         {
           name: '账号管理',

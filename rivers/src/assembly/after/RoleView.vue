@@ -121,7 +121,7 @@ export default {
 
       this.form.id = editor.id;
       this.form.name = editor.name;
-      this.form.menuIds = [];
+      this.form.menuIds = editor.menus.map(menu => menu.id);
     },
     onEditorHandler(formName) {
       this.$refs[formName].validate(async valid => {

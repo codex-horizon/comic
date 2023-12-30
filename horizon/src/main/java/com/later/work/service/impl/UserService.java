@@ -5,14 +5,11 @@ import com.later.common.converter.IConverter;
 import com.later.common.exception.BizException;
 import com.later.common.restful.IPageable;
 import com.later.work.bo.UserBo;
-import com.later.work.entity.RoleEntity;
-import com.later.work.entity.UserEntity;
-import com.later.work.entity.UserRoleEntity;
+import com.later.work.entity.*;
 import com.later.work.qry.UserQry;
-import com.later.work.repository.IRoleRepository;
-import com.later.work.repository.IUserRepository;
-import com.later.work.repository.IUserRoleRepository;
+import com.later.work.repository.*;
 import com.later.work.service.IUserService;
+import com.later.work.vo.ComicVo;
 import com.later.work.vo.RoleVo;
 import com.later.work.vo.UserVo;
 import org.springframework.data.domain.Example;
@@ -21,12 +18,14 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
 import javax.persistence.criteria.Predicate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class UserService implements IUserService {
@@ -39,14 +38,22 @@ public class UserService implements IUserService {
 
     private final IRoleRepository iRoleRepository;
 
+    private final IUserComicRepository iUserComicRepository;
+
+    private final IComicRepository iComicRepository;
+
     UserService(final IConverter iConverter,
                 final IUserRepository iUserRepository,
                 final IUserRoleRepository iUserRoleRepository,
-                final IRoleRepository iRoleRepository) {
+                final IRoleRepository iRoleRepository,
+                final IUserComicRepository iUserComicRepository,
+                final IComicRepository iComicRepository) {
         this.iConverter = iConverter;
         this.iUserRepository = iUserRepository;
         this.iUserRoleRepository = iUserRoleRepository;
         this.iRoleRepository = iRoleRepository;
+        this.iUserComicRepository = iUserComicRepository;
+        this.iComicRepository = iComicRepository;
     }
 
     @Override
@@ -77,6 +84,12 @@ public class UserService implements IUserService {
                 Optional<RoleEntity> optionalRoleEntity = iRoleRepository.findById(optionalUserRoleEntity.get().getRoleId());
                 optionalRoleEntity.ifPresent(roleEntity -> userVo.setRole(iConverter.convert(roleEntity, RoleVo.class)));
             }
+
+            UserComicEntity userComicEntity = new UserComicEntity();
+            userComicEntity.setUserId(userVo.getId());
+            List<UserComicEntity> userComicEntities = iUserComicRepository.findAll(Example.of(userComicEntity));
+            List<ComicEntity> comicEntities = iComicRepository.findAllById(userComicEntities.stream().map(UserComicEntity::getComicId).collect(Collectors.toList()));
+            userVo.setComics(iConverter.convert(comicEntities, ComicVo.class));
         });
         return IPageable.Pageable.response(userEntities.getTotalElements(), userVos);
     }
@@ -90,11 +103,24 @@ public class UserService implements IUserService {
         }
         userBo.setState(Constants.DataState.Disabled.getState());
         Long id = iUserRepository.save(iConverter.convert(userBo, UserEntity.class)).getId();
+
         UserRoleEntity userRoleEntity = new UserRoleEntity();
         userRoleEntity.setUserId(id);
         userRoleEntity.setRoleId(userBo.getRoleId());
         userRoleEntity.setState(Constants.DataState.Disabled.getState());
         iUserRoleRepository.save(userRoleEntity);
+
+        if (!CollectionUtils.isEmpty(userBo.getComicIds())) {
+            List<UserComicEntity> userComicEntities = new ArrayList<>();
+            UserComicEntity userComicEntity;
+            for (Long comicId : userBo.getComicIds()) {
+                userComicEntity = new UserComicEntity();
+                userComicEntity.setUserId(id);
+                userComicEntity.setComicId(comicId);
+                userComicEntities.add(userComicEntity);
+            }
+            iUserComicRepository.saveAll(userComicEntities);
+        }
         return id;
     }
 
@@ -114,6 +140,18 @@ public class UserService implements IUserService {
         userRoleEntity.setRoleId(userBo.getRoleId());
         userRoleEntity.setState(Constants.DataState.Disabled.getState());
         iUserRoleRepository.save(userRoleEntity);
+
+        if (!CollectionUtils.isEmpty(userBo.getComicIds())) {
+            List<UserComicEntity> userComicEntities = new ArrayList<>();
+            UserComicEntity userComicEntity;
+            for (Long comicId : userBo.getComicIds()) {
+                userComicEntity = new UserComicEntity();
+                userComicEntity.setUserId(id);
+                userComicEntity.setComicId(comicId);
+                userComicEntities.add(userComicEntity);
+            }
+            iUserComicRepository.saveAll(userComicEntities);
+        }
         return id;
     }
 

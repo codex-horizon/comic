@@ -41,21 +41,33 @@ public class ComicService implements IComicService {
             if (StringUtils.hasText(comicQry.getName())) {
                 predicates.add(criteriaBuilder.like(root.get("name"), "%" + comicQry.getName() + "%"));
             }
-//            if (StringUtils.hasText(comicQry.getName())) {
-//                criteriaBuilder.like(root.get("name"), "%" + comicQry.getName() + "%");
-//            }
             if (predicates.isEmpty()) {
                 return criteriaBuilder.conjunction();
             } else {
                 return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
             }
-//            return criteriaBuilder.conjunction();
         };
         Page<ComicEntity> comicEntities = iComicRepository.findAll(specification, PageRequest.of(
                 comicQry.getCurrentIndex(),
                 comicQry.getPageableSize(), Sort.Direction.DESC, "lastModifiedDate")
         );
         return IPageable.Pageable.response(comicEntities.getTotalElements(), iConverter.convert(comicEntities, ComicVo.class));
+    }
+
+    @Override
+    public List<ComicVo> list(ComicQry comicQry) {
+        Specification<ComicEntity> specification = (root, criteriaQuery, criteriaBuilder) -> {
+            List<Predicate> predicates = new ArrayList<>();
+            if (StringUtils.hasText(comicQry.getName())) {
+                predicates.add(criteriaBuilder.like(root.get("name"), "%" + comicQry.getName() + "%"));
+            }
+            if (predicates.isEmpty()) {
+                return criteriaBuilder.conjunction();
+            } else {
+                return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
+            }
+        };
+        return iConverter.convert(iComicRepository.findAll(specification), ComicVo.class);
     }
 
 }

@@ -10,4 +10,5 @@ public interface IComicService {
 
     IPageable<List<ComicVo>> pageable(ComicQry comicQry);
 
+    List<ComicVo> list(ComicQry comicQry);
 }

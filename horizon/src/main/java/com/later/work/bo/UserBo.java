@@ -4,6 +4,7 @@ import com.later.core.repository.entity.AbstractBoEntity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import java.io.Serializable;
+import java.util.List;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
@@ -17,4 +18,5 @@ public class UserBo extends AbstractBoEntity implements Serializable {
 
     private Long roleId;
 
+    private List<Long> comicIds;
 }

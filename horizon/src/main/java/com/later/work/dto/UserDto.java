@@ -32,4 +32,6 @@ public class UserDto implements Serializable {
     private String password;
 
     private Long roleId;
+
+    private List<Long> comicIds;
 }

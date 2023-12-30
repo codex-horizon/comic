@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 import java.io.Serializable;
+import java.util.List;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
@@ -17,4 +18,6 @@ public class UserVo extends AbstractVoEntity implements Serializable {
     private String password;
 
     private RoleVo role;
+
+    private List<ComicVo> comics;
 }

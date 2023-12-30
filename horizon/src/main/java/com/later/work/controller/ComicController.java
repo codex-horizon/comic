@@ -29,5 +29,10 @@ public class ComicController {
         return IResult.Result.succeeded(iComicService.pageable(comicQry));
     }
 
+    @RequestMapping(name = "漫画列表", path = "/list", method = RequestMethod.POST)
+    IResult<List<ComicVo>> list(@RequestBody ComicQry comicQry) {
+        return IResult.Result.succeeded(iComicService.list(comicQry));
+    }
+
 
 }
