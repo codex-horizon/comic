@@ -5,6 +5,8 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 import java.io.Serializable;
+import java.util.List;
+
 @EqualsAndHashCode(callSuper = true)
 @Data
 public class RoleBo extends AbstractBoEntity implements Serializable {
@@ -12,6 +14,8 @@ public class RoleBo extends AbstractBoEntity implements Serializable {
     private static final long serialVersionUUID = 1L;
 
     private String name;
+
+    private List<Long> menuIds;
 
 }
 

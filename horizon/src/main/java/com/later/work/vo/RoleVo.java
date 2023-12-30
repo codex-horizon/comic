@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 import java.io.Serializable;
+import java.util.List;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
@@ -14,4 +15,5 @@ public class RoleVo extends AbstractVoEntity implements Serializable {
 
     private String name;
 
+    private List<MenuVo> menus;
 }

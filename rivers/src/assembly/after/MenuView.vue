@@ -52,28 +52,27 @@
     <HorizonDialog v-if="this.$options.name === this.$store.getters['messengerStore/getDialogCurrentView']">
       <!--<template v-slot:header></template>-->
       <template v-slot:body>
-        <el-form class="login" status-icon :model="form" ref="formRef">
+        <el-form status-icon :model="form" ref="formRef">
           <el-form-item prop="name" :rules="[{required: true, message: '角色名称 空', trigger: 'blur'}]">
-            <el-input v-model="form.name" placeholder="角色名称" prefix-icon="User" clearable/>
+            <el-input v-model="form.name" placeholder="角色名称" prefix-icon="Fries" clearable/>
           </el-form-item>
           <el-form-item prop="path" :rules="[{required: true, message: '路由 空', trigger: 'blur'}]">
-            <el-input v-model="form.path" placeholder="路由" prefix-icon="User" clearable/>
+            <el-input v-model="form.path" placeholder="路由" prefix-icon="Pear" clearable/>
           </el-form-item>
           <el-form-item prop="icon" :rules="[{required: true, message: '图标 空', trigger: 'blur'}]">
-            <el-input v-model="form.icon" placeholder="图标" prefix-icon="User" clearable/>
+            <el-select v-model="form.icon" placeholder="图标" prefix-icon="MilkTea" clearable>
+              <el-option v-for="icon in icons" :key="icon" :label="icon" :value="icon">
+                <template #default>
+                  <el-icon>
+                    <component :is="icon"/>
+                  </el-icon>
+                </template>
+              </el-option>
+            </el-select>
           </el-form-item>
           <el-form-item prop="sort" :rules="[{required: true, message: '排序 空', trigger: 'blur'}]">
-            <el-input v-model="form.sort" placeholder="排序" prefix-icon="User" clearable/>
+            <el-input-number v-model="form.sort" :min="1" :max="100"/>
           </el-form-item>
-          <!--          <el-form-item prop="parentId" :rules="[{required: true, message: '父节点 空', trigger: 'blur'}]">-->
-          <!--            <el-select v-model="form.parentId" placeholder="父节点">-->
-          <!--              <el-option-->
-          <!--                  v-for="item in options"-->
-          <!--                  :key="item.value"-->
-          <!--                  :label="item.label"-->
-          <!--                  :value="item.value"/>-->
-          <!--            </el-select>-->
-          <!--          </el-form-item>-->
           <el-form-item>
             <el-button v-if="currentAction === 'add'" type="primary" icon="Plus" circle plain
                        @click="onAddHandler('formRef')" :disabled="disabled"/>
@@ -88,6 +87,7 @@
 </template>
 <script>
 import {menuApi} from "@/api/index.js";
+import * as Icons from "@element-plus/icons-vue";
 
 export default {
   name: 'MenuView',
@@ -101,32 +101,7 @@ export default {
         icon: '',
         sort: 0
       },
-      // options:[
-      //   {
-      //     value: '',
-      //     label: '',
-      //   },
-      //   {
-      //     value: 'Option1',
-      //     label: 'Option1',
-      //   },
-      //   {
-      //     value: 'Option2',
-      //     label: 'Option2',
-      //   },
-      //   {
-      //     value: 'Option3',
-      //     label: 'Option3',
-      //   },
-      //   {
-      //     value: 'Option4',
-      //     label: 'Option4',
-      //   },
-      //   {
-      //     value: 'Option5',
-      //     label: 'Option5',
-      //   },
-      // ],
+      icons:[],
       disabled: false,
       formSearch: {
         name: '',
@@ -222,8 +197,15 @@ export default {
         this.tableData = res.data.list;
       })
     },
+    fetchIcons(){
+      this.icons = [];
+      for (const [name, component] of Object.entries(Icons)) {
+        this.icons.push(name);
+      }
+    },
     initialize() {
       this.fetchPageable();
+      this.fetchIcons();
     }
   },
   mounted() {
@@ -268,6 +250,10 @@ export default {
 
   :deep(.el-form-item:last-child > .el-form-item__content) {
     justify-content: right;
+  }
+
+  :deep(.el-select, .el-input-number) {
+    width: 100%;
   }
 }
 </style>

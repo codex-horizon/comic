@@ -32,8 +32,13 @@ public class MenuController {
     }
 
     @RequestMapping(name = "菜单列表", path = "/list", method = RequestMethod.POST)
-    IResult<IPageable<List<MenuVo>>> list(@RequestBody MenuQry menuQry) {
-        return IResult.Result.succeeded(iMenuService.list(menuQry));
+    IResult<List<MenuVo>> list(@RequestBody MenuQry menuQry) {
+        return IResult.Result.succeeded(iConverter.convert(iMenuService.list(menuQry), MenuVo.class));
+    }
+
+    @RequestMapping(name = "菜单分页", path = "/pageable", method = RequestMethod.POST)
+    IResult<IPageable<List<MenuVo>>> pageable(@RequestBody MenuQry menuQry) {
+        return IResult.Result.succeeded(iMenuService.pageable(menuQry));
     }
 
     @RequestMapping(name = "菜单添加", path = "/add", method = RequestMethod.POST)

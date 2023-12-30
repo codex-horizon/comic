@@ -13,5 +13,7 @@ public interface IMenuService {
 
     Long add(MenuBo menuBo);
 
-    IPageable<List<MenuVo>> list(MenuQry menuQry);
+    IPageable<List<MenuVo>> pageable(MenuQry menuQry);
+
+    List<MenuBo> list(MenuQry menuQry);
 }

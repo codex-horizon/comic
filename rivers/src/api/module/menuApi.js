@@ -3,8 +3,13 @@
 import {post} from '@/utils';
 
 export const menuApi = {
-    fetchPageable(qry) {
+    fetchList(qry) {
         return post('/menu/list', {}, qry, {
+            'Content-Type':'application/json;charset=utf-8'
+        });
+    },
+    fetchPageable(qry) {
+        return post('/menu/pageable', {}, qry, {
             'Content-Type':'application/json;charset=utf-8'
         });
     },

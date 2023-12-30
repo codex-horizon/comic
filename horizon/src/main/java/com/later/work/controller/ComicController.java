@@ -24,9 +24,9 @@ public class ComicController {
         this.iConverter = iConverter;
     }
 
-    @RequestMapping(name = "漫画列表", path = "/list", method = RequestMethod.POST)
-    IResult<IPageable<List<ComicVo>>> list(@RequestBody ComicQry comicQry) {
-        return IResult.Result.succeeded(iComicService.list(comicQry));
+    @RequestMapping(name = "漫画分页", path = "/pageable", method = RequestMethod.POST)
+    IResult<IPageable<List<ComicVo>>> pageable(@RequestBody ComicQry comicQry) {
+        return IResult.Result.succeeded(iComicService.pageable(comicQry));
     }
 
 

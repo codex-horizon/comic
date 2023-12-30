@@ -31,9 +31,9 @@ public class UserController {
         this.iConverter = iConverter;
     }
 
-    @RequestMapping(name = "用户列表", path = "/list", method = RequestMethod.POST)
-    IResult<IPageable<List<UserVo>>> list(@RequestBody UserQry userQry) {
-        return IResult.Result.succeeded(iUserService.list(userQry));
+    @RequestMapping(name = "用户分页", path = "/pageable", method = RequestMethod.POST)
+    IResult<IPageable<List<UserVo>>> pageable(@RequestBody UserQry userQry) {
+        return IResult.Result.succeeded(iUserService.pageable(userQry));
     }
 
     @RequestMapping(name = "用户添加", path = "/add", method = RequestMethod.POST)

@@ -55,12 +55,13 @@ public class MenuService implements IMenuService {
     }
 
     @Override
-    public IPageable<List<MenuVo>> list(MenuQry menuQry) {
+    public IPageable<List<MenuVo>> pageable(MenuQry menuQry) {
         Specification<MenuEntity> specification = (root, criteriaQuery, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
             if (StringUtils.hasText(menuQry.getName())) {
                 predicates.add(criteriaBuilder.like(root.get("name"), "%" + menuQry.getName() + "%"));
-            } if (StringUtils.hasText(menuQry.getPath())) {
+            }
+            if (StringUtils.hasText(menuQry.getPath())) {
                 predicates.add(criteriaBuilder.like(root.get("path"), "%" + menuQry.getPath() + "%"));
             }
             if (predicates.isEmpty()) {
@@ -76,5 +77,25 @@ public class MenuService implements IMenuService {
                 "lastModifiedDate"
         ));
         return IPageable.Pageable.response(menuEntities.getTotalElements(), iConverter.convert(menuEntities, MenuVo.class));
+    }
+
+    @Override
+    public List<MenuBo> list(MenuQry menuQry) {
+        Specification<MenuEntity> specification = (root, criteriaQuery, criteriaBuilder) -> {
+            List<Predicate> predicates = new ArrayList<>();
+            if (StringUtils.hasText(menuQry.getName())) {
+                predicates.add(criteriaBuilder.like(root.get("name"), "%" + menuQry.getName() + "%"));
+            }
+            if (StringUtils.hasText(menuQry.getPath())) {
+                predicates.add(criteriaBuilder.like(root.get("path"), "%" + menuQry.getPath() + "%"));
+            }
+            if (predicates.isEmpty()) {
+                return criteriaBuilder.conjunction();
+            } else {
+                return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
+            }
+        };
+        List<MenuEntity> menuEntities = iMenuRepository.findAll(specification);
+        return iConverter.convert(menuEntities, MenuBo.class);
     }
 }

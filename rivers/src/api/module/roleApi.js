@@ -2,8 +2,13 @@
 import {post} from '@/utils';
 
 export const roleApi = {
-    fetchPageable(qry) {
+    fetchList(qry) {
         return post('/role/list', {}, qry, {
+            'Content-Type':'application/json;charset=utf-8'
+        });
+    },
+    fetchPageable(qry) {
+        return post('/role/pageable', {}, qry, {
             'Content-Type':'application/json;charset=utf-8'
         });
     },

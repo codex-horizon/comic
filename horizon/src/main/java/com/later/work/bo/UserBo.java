@@ -15,4 +15,6 @@ public class UserBo extends AbstractBoEntity implements Serializable {
 
     private String password;
 
+    private Long roleId;
+
 }

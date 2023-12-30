@@ -35,7 +35,7 @@ public class ComicService implements IComicService {
     }
 
     @Override
-    public IPageable<List<ComicVo>> list(ComicQry comicQry) {
+    public IPageable<List<ComicVo>> pageable(ComicQry comicQry) {
         Specification<ComicEntity> specification = (root, criteriaQuery, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
             if (StringUtils.hasText(comicQry.getName())) {

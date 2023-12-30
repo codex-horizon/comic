@@ -3,7 +3,7 @@ import {post} from '@/utils';
 
 export const userApi = {
     fetchPageable(qry) {
-        return post('/user/list', {}, qry, {
+        return post('/user/pageable', {}, qry, {
             'Content-Type':'application/json;charset=utf-8'
         });
     },

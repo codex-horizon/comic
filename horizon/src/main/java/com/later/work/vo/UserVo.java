@@ -16,4 +16,5 @@ public class UserVo extends AbstractVoEntity implements Serializable {
 
     private String password;
 
+    private RoleVo role;
 }

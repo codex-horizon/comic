@@ -6,6 +6,8 @@ import lombok.Data;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
+import java.util.List;
+
 @Data
 public class RoleDto  implements Serializable {
 
@@ -20,5 +22,7 @@ public class RoleDto  implements Serializable {
             GroupValidator.Create.class
     })
     private String name;
+
+    private List<Long> menuIds;
 
 }

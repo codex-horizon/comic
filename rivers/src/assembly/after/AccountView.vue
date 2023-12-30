@@ -18,6 +18,13 @@
         <el-table-column fixed prop="id" label="标识" width="200"/>
         <el-table-column prop="username" label="账号" width="200"/>
         <el-table-column prop="password" label="密码" width="200"/>
+        <el-table-column prop="role" label="角色名称" width="200">
+          <template #default="scope">
+            <el-tag type="info">
+              {{ scope.row?.role?.name }}
+            </el-tag>
+          </template>
+        </el-table-column>
         <el-table-column prop="createdBy" label="创建人" width="200"/>
         <el-table-column prop="createdDate" label="创建时间" width="200"/>
         <el-table-column prop="lastModifiedBy" label="最后修改人" width="200"/>
@@ -25,7 +32,6 @@
         <el-table-column fixed="right" label="操作" width="120">
           <template #default="scope">
             <el-button link type="primary" size="small" @click="onPreEditorHandler(scope.row)">编辑</el-button>
-            <el-button link type="primary" size="small" @click="onPreEditorHandler(scope.row)">分配角色</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -46,6 +52,11 @@
           <el-form-item prop="password" :rules="[{required: true, message: '密码 空', trigger: 'blur'}]">
             <el-input v-model="form.password" placeholder="密码" prefix-icon="Key" show-password clearable/>
           </el-form-item>
+          <el-form-item prop="roleId" :rules="[{required: true, message: '角色 空', trigger: 'blur'}]">
+            <el-select v-model="form.roleId" placeholder="角色" prefix-icon="MilkTea" clearable>
+              <el-option v-for="({id, name}, index) in roles" :key="index" :label="name" :value="id"/>
+            </el-select>
+          </el-form-item>
           <el-form-item>
             <el-button v-if="currentAction === 'add'" type="primary" icon="Plus" circle plain
                        @click="onAddHandler('formRef')" :disabled="disabled"/>
@@ -59,8 +70,7 @@
   </div>
 </template>
 <script>
-import {comicApi} from '@/api/index.js';
-import {userApi} from "@/api/index.js";
+import {userApi, roleApi} from "@/api/index.js";
 
 export default {
   name: 'AccountView',
@@ -70,8 +80,10 @@ export default {
       form: {
         id: '',
         username: '',
-        password: ''
+        password: '',
+        roleId: ''
       },
+      roles: [],
       disabled: false,
       formSearch: {
         username: ''
@@ -162,8 +174,14 @@ export default {
         this.tableData = res.data.list;
       })
     },
+    fetchRoleList() {
+      roleApi.fetchList({}).then(res => {
+        this.roles = res.data;
+      })
+    },
     initialize() {
       this.fetchPageable();
+      this.fetchRoleList();
     }
   },
   mounted() {
@@ -208,6 +226,10 @@ export default {
 
   :deep(.el-form-item:last-child > .el-form-item__content) {
     justify-content: right;
+  }
+
+  :deep(.el-select, .el-input-number) {
+    width: 100%;
   }
 }
 </style>

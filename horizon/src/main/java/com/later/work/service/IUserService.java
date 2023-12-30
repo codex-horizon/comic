@@ -10,7 +10,7 @@ import java.util.List;
 
 public interface IUserService {
 
-    IPageable<List<UserVo>> list(UserQry userQry);
+    IPageable<List<UserVo>> pageable(UserQry userQry);
 
     Long add(UserBo userBo);
 

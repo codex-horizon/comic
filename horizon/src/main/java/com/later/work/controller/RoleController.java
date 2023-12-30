@@ -32,8 +32,13 @@ public class RoleController {
     }
 
     @RequestMapping(name = "角色列表", path = "/list", method = RequestMethod.POST)
-    IResult<IPageable<List<RoleVo>>> list(@RequestBody RoleQry roleQry) {
+    IResult<List<RoleVo>> list(@RequestBody RoleQry roleQry) {
         return IResult.Result.succeeded(iRoleService.list(roleQry));
+    }
+
+    @RequestMapping(name = "角色分页", path = "/pageable", method = RequestMethod.POST)
+    IResult<IPageable<List<RoleVo>>> pageable(@RequestBody RoleQry roleQry) {
+        return IResult.Result.succeeded(iRoleService.pageable(roleQry));
     }
 
     @RequestMapping(name = "角色添加", path = "/add", method = RequestMethod.POST)

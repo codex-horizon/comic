@@ -6,6 +6,7 @@ import lombok.Data;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
+import java.util.List;
 
 @Data
 public class UserDto implements Serializable {
@@ -29,4 +30,6 @@ public class UserDto implements Serializable {
             GroupValidator.Login.class
     })
     private String password;
+
+    private Long roleId;
 }

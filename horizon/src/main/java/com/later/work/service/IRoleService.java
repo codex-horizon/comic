@@ -10,10 +10,11 @@ import java.util.List;
 
 public interface IRoleService {
 
-    IPageable<List<RoleVo>> list(RoleQry roleQry);
+    IPageable<List<RoleVo>> pageable(RoleQry roleQry);
 
     Long add(RoleBo roleBo);
 
     Long update(RoleBo roleBo);
 
+    List<RoleVo> list(RoleQry roleQry);
 }

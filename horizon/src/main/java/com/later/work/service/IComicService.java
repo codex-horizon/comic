@@ -8,6 +8,6 @@ import java.util.List;
 
 public interface IComicService {
 
-    IPageable<List<ComicVo>> list(ComicQry comicQry);
+    IPageable<List<ComicVo>> pageable(ComicQry comicQry);
 
 }

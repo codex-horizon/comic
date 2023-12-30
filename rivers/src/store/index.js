@@ -101,7 +101,8 @@ export default createStore({
                     ]
                 },
             ],
-            breadcrumbs: []
+            breadcrumbs: [],
+            icons:[]
         }
     },
     getters: {
@@ -110,6 +111,9 @@ export default createStore({
         },
         getBreadcrumbs(state) {
             return state.breadcrumbs;
+        },
+        getIcons(state) {
+            return state.icons;
         }
     },
     mutations: {
@@ -118,6 +122,9 @@ export default createStore({
         },
         setBreadcrumbs(state, breadcrumbs) {
             state.breadcrumbs = breadcrumbs
+        },
+        setIcons(state, icons) {
+            state.icons = icons
         }
     },
     actions: {
@@ -129,7 +136,10 @@ export default createStore({
             //     return breadcrumb.redirect === undefined;
             // });
             commit('setBreadcrumbs', breadcrumbs);
-        }
+        },
+        asyncSetIcons(context, icons) {
+            context.commit('setIcons', icons);
+        },
     },
     modules: {
         messengerStore

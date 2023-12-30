@@ -17,6 +17,13 @@
       <el-table :data="tableData" style="width: 100%" height="440">
         <el-table-column fixed prop="id" label="标识" width="200"/>
         <el-table-column prop="name" label="角色名称" width="200"/>
+        <el-table-column prop="menus" label="菜单项" width="260">
+          <template #default="scope">
+            <el-tag v-for="({ name,path }, index) in scope.row.menus" :key="index">
+              <span v-html="name"></span> - {{ path }}
+            </el-tag>
+          </template>
+        </el-table-column>
         <el-table-column prop="createdBy" label="创建人" width="200"/>
         <el-table-column prop="createdDate" label="创建时间" width="200"/>
         <el-table-column prop="lastModifiedBy" label="最后修改人" width="200"/>
@@ -41,6 +48,15 @@
           <el-form-item prop="name" :rules="[{required: true, message: '角色名称 空', trigger: 'blur'}]">
             <el-input v-model="form.name" placeholder="角色名称" prefix-icon="User" clearable/>
           </el-form-item>
+          <el-form-item prop="menuIds" :rules="[{required: true, message: '菜单 空', trigger: 'blur'}]">
+            <el-select v-model="form.menuIds" placeholder="菜单" multiple>
+              <el-option v-for="menu in menus" :key="menu.id" :label="menu.name" :value="menu.id">
+                <template #default>
+                  <span v-html="menu.name"/>
+                </template>
+              </el-option>
+            </el-select>
+          </el-form-item>
           <el-form-item>
             <el-button v-if="currentAction === 'add'" type="primary" icon="Plus" circle plain
                        @click="onAddHandler('formRef')" :disabled="disabled"/>
@@ -54,7 +70,7 @@
   </div>
 </template>
 <script>
-import {roleApi} from "@/api/index.js";
+import {roleApi, menuApi} from "@/api/index.js";
 
 export default {
   name: 'RoleView',
@@ -63,8 +79,10 @@ export default {
       currentAction: '',
       form: {
         id: '',
-        name: ''
+        name: '',
+        menuIds: []
       },
+      menus: [],
       disabled: false,
       formSearch: {
         name: ''
@@ -84,13 +102,14 @@ export default {
     onPreEditorHandler(editor) {
       this.$store.commit('messengerStore/setDialogCurrentView', this.$options.name);
       this.$store.commit('messengerStore/setDialogVisible', true);
-      this.$store.commit('messengerStore/setDialogTitle', '账户编辑');
+      this.$store.commit('messengerStore/setDialogTitle', '角色编辑');
       this.$store.commit('messengerStore/setDialogWidth', '46%');
       this.$store.commit('messengerStore/setDialogFooter', false);
       this.currentAction = 'editor';
 
       this.form.id = editor.id;
       this.form.name = editor.name;
+      this.form.menuIds = [];
     },
     onEditorHandler(formName) {
       this.$refs[formName].validate(async valid => {
@@ -119,6 +138,7 @@ export default {
       this.currentAction = 'add';
       this.form.id = '';
       this.form.name = '';
+      this.form.menuIds = [];
     },
     onAddHandler(formName) {
       this.$refs[formName].validate(async valid => {
@@ -147,14 +167,19 @@ export default {
     },
     fetchPageable() {
       Object.assign(this.pageableQry, this.formSearch);
-      console.log(this.pageableQry);
       roleApi.fetchPageable(this.pageableQry).then(res => {
         this.pageableQry.total = res.data.total;
         this.tableData = res.data.list;
       })
     },
+    fetchMenuList() {
+      menuApi.fetchList({}).then(res => {
+        this.menus = res.data;
+      })
+    },
     initialize() {
       this.fetchPageable();
+      this.fetchMenuList();
     }
   },
   mounted() {
@@ -199,6 +224,10 @@ export default {
 
   :deep(.el-form-item:last-child > .el-form-item__content) {
     justify-content: right;
+  }
+
+  :deep(.el-select, .el-input-number) {
+    width: 100%;
   }
 }
 </style>
