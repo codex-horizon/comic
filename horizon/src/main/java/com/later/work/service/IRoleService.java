@@ -17,4 +17,6 @@ public interface IRoleService {
     Long update(RoleBo roleBo);
 
     List<RoleVo> list(RoleQry roleQry);
+
+    Boolean delete(Long id);
 }

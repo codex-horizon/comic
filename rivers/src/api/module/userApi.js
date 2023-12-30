@@ -17,4 +17,9 @@ export const userApi = {
             'Content-Type':'application/json;charset=utf-8'
         });
     },
+    deleteById(id) {
+        return post(`/user/delete/${id}`, {}, {}, {
+            'Content-Type': 'application/json;charset=utf-8'
+        });
+    },
 };

@@ -88,6 +88,7 @@ public class RoleService implements IRoleService {
         if (iRoleRepository.exists(Example.of(roleEntity))) {
             throw new BizException(Constants.BizStatus.Role_Exists);
         }
+        roleBo.setState(Constants.DataState.Disabled.getState());
         Long id = iRoleRepository.save(iConverter.convert(roleBo, RoleEntity.class)).getId();
         if (!CollectionUtils.isEmpty(roleBo.getMenuIds())) {
             List<RoleMenuEntity> roleMenuEntities = new ArrayList<>();
@@ -96,6 +97,7 @@ public class RoleService implements IRoleService {
                 roleMenuEntity = new RoleMenuEntity();
                 roleMenuEntity.setRoleId(id);
                 roleMenuEntity.setMenuId(menuId);
+                roleMenuEntity.setState(Constants.DataState.Disabled.getState());
                 roleMenuEntities.add(roleMenuEntity);
             }
             iRoleMenuRepository.saveAll(roleMenuEntities);
@@ -115,6 +117,7 @@ public class RoleService implements IRoleService {
                 roleMenuEntity = new RoleMenuEntity();
                 roleMenuEntity.setRoleId(id);
                 roleMenuEntity.setMenuId(menuId);
+                roleMenuEntity.setState(Constants.DataState.Disabled.getState());
                 roleMenuEntities.add(roleMenuEntity);
             }
             iRoleMenuRepository.saveAll(roleMenuEntities);
@@ -136,5 +139,11 @@ public class RoleService implements IRoleService {
             }
         };
         return iConverter.convert(iRoleRepository.findAll(specification), RoleVo.class);
+    }
+
+    @Override
+    public Boolean delete(Long id) {
+        iRoleRepository.deleteById(id);
+        return true;
     }
 }

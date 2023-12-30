@@ -10,10 +10,7 @@ import com.later.work.qry.MenuQry;
 import com.later.work.service.IMenuService;
 import com.later.work.vo.MenuVo;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -49,6 +46,11 @@ public class MenuController {
     @RequestMapping(name = "菜单更新", path = "/update", method = RequestMethod.POST)
     IResult<Long> update(@RequestBody @Validated(GroupValidator.Modify.class) MenuDto menuDto) {
         return IResult.Result.succeeded(iMenuService.update(iConverter.convert(menuDto, MenuBo.class)));
+    }
+
+    @RequestMapping(name = "菜单删除", path = "/delete/{id}", method = RequestMethod.POST)
+    IResult<Boolean> delete(@PathVariable("id")Long id) {
+        return IResult.Result.succeeded(iMenuService.delete(id));
     }
 
 }

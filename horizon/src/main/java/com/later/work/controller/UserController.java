@@ -10,10 +10,7 @@ import com.later.work.qry.UserQry;
 import com.later.work.service.IUserService;
 import com.later.work.vo.UserVo;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -49,6 +46,11 @@ public class UserController {
     @RequestMapping(name = "用户登录", path = "/login", method = RequestMethod.POST)
     IResult<?> login(@RequestBody @Validated(GroupValidator.Login.class) UserDto userDto) {
         return IResult.Result.succeeded(iUserService.login(iConverter.convert(userDto, UserBo.class)));
+    }
+
+    @RequestMapping(name = "用户删除", path = "/delete/{id}", method = RequestMethod.POST)
+    IResult<Boolean> delete(@PathVariable("id")Long id) {
+        return IResult.Result.succeeded(iUserService.delete(id));
     }
 
 }

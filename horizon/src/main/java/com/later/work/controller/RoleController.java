@@ -10,10 +10,7 @@ import com.later.work.qry.RoleQry;
 import com.later.work.service.IRoleService;
 import com.later.work.vo.RoleVo;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -51,4 +48,8 @@ public class RoleController {
         return IResult.Result.succeeded(iRoleService.update(iConverter.convert(roleDto, RoleBo.class)));
     }
 
+    @RequestMapping(name = "角色删除", path = "/delete/{id}", method = RequestMethod.POST)
+    IResult<Boolean> delete(@PathVariable("id")Long id) {
+        return IResult.Result.succeeded(iRoleService.delete(id));
+    }
 }

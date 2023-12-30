@@ -31,6 +31,7 @@
         <el-table-column fixed="right" label="操作" width="120">
           <template #default="scope">
             <el-button link type="primary" size="small" @click="onPreEditorHandler(scope.row)">编辑</el-button>
+            <el-button link type="warning" size="small" @click="onDeleteHandler(scope.row.id)">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -99,6 +100,17 @@ export default {
     }
   },
   methods: {
+    onDeleteHandler(id) {
+      roleApi.deleteById(id).then(res => {
+        if ('Biz_Ok_Response' === res.code) {
+          this.$message.success('删除成功。');
+          this.onSearchQuery();
+        }
+        if ('Biz_Failed_Response' === res.code) {
+          this.$message.error(res.message);
+        }
+      });
+    },
     onPreEditorHandler(editor) {
       this.$store.commit('messengerStore/setDialogCurrentView', this.$options.name);
       this.$store.commit('messengerStore/setDialogVisible', true);

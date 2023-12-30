@@ -16,4 +16,6 @@ public interface IMenuService {
     IPageable<List<MenuVo>> pageable(MenuQry menuQry);
 
     List<MenuBo> list(MenuQry menuQry);
+
+    Boolean delete(Long id);
 }

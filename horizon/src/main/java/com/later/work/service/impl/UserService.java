@@ -88,10 +88,12 @@ public class UserService implements IUserService {
         if (iUserRepository.exists(Example.of(userEntity))) {
             throw new BizException(Constants.BizStatus.User_Exists);
         }
+        userBo.setState(Constants.DataState.Disabled.getState());
         Long id = iUserRepository.save(iConverter.convert(userBo, UserEntity.class)).getId();
         UserRoleEntity userRoleEntity = new UserRoleEntity();
         userRoleEntity.setUserId(id);
         userRoleEntity.setRoleId(userBo.getRoleId());
+        userRoleEntity.setState(Constants.DataState.Disabled.getState());
         iUserRoleRepository.save(userRoleEntity);
         return id;
     }
@@ -110,6 +112,7 @@ public class UserService implements IUserService {
         userRoleEntity = new UserRoleEntity();
         userRoleEntity.setUserId(id);
         userRoleEntity.setRoleId(userBo.getRoleId());
+        userRoleEntity.setState(Constants.DataState.Disabled.getState());
         iUserRoleRepository.save(userRoleEntity);
         return id;
     }
@@ -124,6 +127,12 @@ public class UserService implements IUserService {
 //        Long id = iUserRepository.findOne(Example.of(userEntity)).orElseThrow(() -> new BizException(Constants.BizStatus.User_Not_Exists)).getId();
 //        throw new BizException(Constants.BizStatus.User_Not_Exists);
         return iUserRepository.exists(Example.of(userEntity));
+    }
+
+    @Override
+    public Boolean delete(Long id) {
+        iUserRepository.deleteById(id);
+        return true;
     }
 
 

@@ -52,11 +52,6 @@ export default {
           route: '/role.html',
           icon: 'User'
         },
-        // {
-        //   name: '权限分配',
-        //   route: '/permission.html',
-        //   icon: 'Connection'
-        // },
         {
           name: '菜单管理',
           route: '/menu.html',

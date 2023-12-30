@@ -51,6 +51,7 @@ public class MenuService implements IMenuService {
         if (iMenuRepository.exists(Example.of(menuEntity))) {
             throw new BizException(Constants.BizStatus.Role_Exists);
         }
+        menuBo.setState(Constants.DataState.Disabled.getState());
         return iMenuRepository.save(iConverter.convert(menuBo, MenuEntity.class)).getId();
     }
 
@@ -97,5 +98,11 @@ public class MenuService implements IMenuService {
         };
         List<MenuEntity> menuEntities = iMenuRepository.findAll(specification);
         return iConverter.convert(menuEntities, MenuBo.class);
+    }
+
+    @Override
+    public Boolean delete(Long id) {
+        iMenuRepository.deleteById(id);
+        return true;
     }
 }

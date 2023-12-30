@@ -22,4 +22,9 @@ export const roleApi = {
             'Content-Type':'application/json;charset=utf-8'
         });
     },
+    deleteById(id) {
+        return post(`/role/delete/${id}`, {}, {}, {
+            'Content-Type': 'application/json;charset=utf-8'
+        });
+    },
 };
