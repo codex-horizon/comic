@@ -8,7 +8,10 @@ import {
     ComicEditorView,
     ComicsView,
     AccountView,
-    PermissionView
+    RoleView,
+    PermissionView,
+    ComicPermissionView,
+    MenuView
 } from './modules/router.js';
 
 const router = createRouter({
@@ -64,11 +67,32 @@ const router = createRouter({
                     component: AccountView
                 },{
                     meta: {
+                        title: '角色管理'
+                    },
+                    path: '/role.html',
+                    name: RoleView.name,
+                    component: RoleView
+                },{
+                    meta: {
                         title: '权限分配'
                     },
                     path: '/permission.html',
                     name: PermissionView.name,
                     component: PermissionView
+                },{
+                    meta: {
+                        title: '漫画权限'
+                    },
+                    path: '/comicPermission.html',
+                    name: ComicPermissionView.name,
+                    component: ComicPermissionView
+                },{
+                    meta: {
+                        title: '菜单管理'
+                    },
+                    path: '/menu.html',
+                    name: MenuView.name,
+                    component: MenuView
                 }
             ]
         }

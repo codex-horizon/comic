@@ -30,7 +30,7 @@ public class MenuEntity extends AbstractPoEntity implements Serializable {
     @Column(name = "sort", nullable = false, columnDefinition = "varchar(256) comment '排序'")
     private Integer sort;
 
-    @Column(name = "parent_id", nullable = false, columnDefinition = "varchar(256) comment '父节点'")
+    @Column(name = "parent_id", nullable = true, columnDefinition = "varchar(256) comment '父节点'")
     private Long parentId;
 
 }

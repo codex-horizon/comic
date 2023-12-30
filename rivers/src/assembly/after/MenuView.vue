@@ -3,10 +3,12 @@
     <div class="search-layout">
       <div class="search-title"/>
       <el-form :inline="true" :model="formSearch">
-        <el-form-item label="账户名称：">
-          <el-input v-model="formSearch.username" placeholder="账户名称"/>
+        <el-form-item label="菜单名称：">
+          <el-input v-model="formSearch.name" placeholder="菜单名称"/>
         </el-form-item>
-
+        <el-form-item label="菜单路由：">
+          <el-input v-model="formSearch.path" placeholder="菜单路由"/>
+        </el-form-item>
         <el-form-item>
           <el-button type="primary" icon="Search" circle @click="onSearchQuery"/>
           <el-button type="primary" icon="Plus" circle plain @click="onPreAddHandler"/>
@@ -16,8 +18,20 @@
     <div class="table-layout">
       <el-table :data="tableData" style="width: 100%" height="440">
         <el-table-column fixed prop="id" label="标识" width="200"/>
-        <el-table-column prop="username" label="账号" width="200"/>
-        <el-table-column prop="password" label="密码" width="200"/>
+        <el-table-column prop="name" label="菜单名称" width="200">
+          <template #default="scope">
+            <span v-html="scope.row.name"/>
+          </template>
+        </el-table-column>
+        <el-table-column prop="path" label="路由" width="200"/>
+        <el-table-column prop="icon" label="图标" width="200">
+          <template #default="scope">
+            <el-icon>
+              <component :is="scope.row.icon"/>
+            </el-icon>
+          </template>
+        </el-table-column>
+        <el-table-column prop="sort" label="排序" width="200"/>
         <el-table-column prop="createdBy" label="创建人" width="200"/>
         <el-table-column prop="createdDate" label="创建时间" width="200"/>
         <el-table-column prop="lastModifiedBy" label="最后修改人" width="200"/>
@@ -25,7 +39,6 @@
         <el-table-column fixed="right" label="操作" width="120">
           <template #default="scope">
             <el-button link type="primary" size="small" @click="onPreEditorHandler(scope.row)">编辑</el-button>
-            <el-button link type="primary" size="small" @click="onPreEditorHandler(scope.row)">分配角色</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -40,12 +53,27 @@
       <!--<template v-slot:header></template>-->
       <template v-slot:body>
         <el-form class="login" status-icon :model="form" ref="formRef">
-          <el-form-item prop="username" :rules="[{required: true, message: '账号 空', trigger: 'blur'}]">
-            <el-input v-model="form.username" placeholder="账号" prefix-icon="User" clearable/>
+          <el-form-item prop="name" :rules="[{required: true, message: '角色名称 空', trigger: 'blur'}]">
+            <el-input v-model="form.name" placeholder="角色名称" prefix-icon="User" clearable/>
           </el-form-item>
-          <el-form-item prop="password" :rules="[{required: true, message: '密码 空', trigger: 'blur'}]">
-            <el-input v-model="form.password" placeholder="密码" prefix-icon="Key" show-password clearable/>
+          <el-form-item prop="path" :rules="[{required: true, message: '路由 空', trigger: 'blur'}]">
+            <el-input v-model="form.path" placeholder="路由" prefix-icon="User" clearable/>
           </el-form-item>
+          <el-form-item prop="icon" :rules="[{required: true, message: '图标 空', trigger: 'blur'}]">
+            <el-input v-model="form.icon" placeholder="图标" prefix-icon="User" clearable/>
+          </el-form-item>
+          <el-form-item prop="sort" :rules="[{required: true, message: '排序 空', trigger: 'blur'}]">
+            <el-input v-model="form.sort" placeholder="排序" prefix-icon="User" clearable/>
+          </el-form-item>
+          <!--          <el-form-item prop="parentId" :rules="[{required: true, message: '父节点 空', trigger: 'blur'}]">-->
+          <!--            <el-select v-model="form.parentId" placeholder="父节点">-->
+          <!--              <el-option-->
+          <!--                  v-for="item in options"-->
+          <!--                  :key="item.value"-->
+          <!--                  :label="item.label"-->
+          <!--                  :value="item.value"/>-->
+          <!--            </el-select>-->
+          <!--          </el-form-item>-->
           <el-form-item>
             <el-button v-if="currentAction === 'add'" type="primary" icon="Plus" circle plain
                        @click="onAddHandler('formRef')" :disabled="disabled"/>
@@ -59,22 +87,50 @@
   </div>
 </template>
 <script>
-import {comicApi} from '@/api/index.js';
-import {userApi} from "@/api/index.js";
+import {menuApi} from "@/api/index.js";
 
 export default {
-  name: 'AccountView',
+  name: 'MenuView',
   data() {
     return {
       currentAction: '',
       form: {
         id: '',
-        username: '',
-        password: ''
+        name: '',
+        path: '',
+        icon: '',
+        sort: 0
       },
+      // options:[
+      //   {
+      //     value: '',
+      //     label: '',
+      //   },
+      //   {
+      //     value: 'Option1',
+      //     label: 'Option1',
+      //   },
+      //   {
+      //     value: 'Option2',
+      //     label: 'Option2',
+      //   },
+      //   {
+      //     value: 'Option3',
+      //     label: 'Option3',
+      //   },
+      //   {
+      //     value: 'Option4',
+      //     label: 'Option4',
+      //   },
+      //   {
+      //     value: 'Option5',
+      //     label: 'Option5',
+      //   },
+      // ],
       disabled: false,
       formSearch: {
-        username: ''
+        name: '',
+        path: ''
       },
       tableData: [],
       pageableQry: {
@@ -91,20 +147,22 @@ export default {
     onPreEditorHandler(editor) {
       this.$store.commit('messengerStore/setDialogCurrentView', this.$options.name);
       this.$store.commit('messengerStore/setDialogVisible', true);
-      this.$store.commit('messengerStore/setDialogTitle', '账户编辑');
+      this.$store.commit('messengerStore/setDialogTitle', '菜单编辑');
       this.$store.commit('messengerStore/setDialogWidth', '46%');
       this.$store.commit('messengerStore/setDialogFooter', false);
       this.currentAction = 'editor';
 
       this.form.id = editor.id;
-      this.form.username = editor.username;
-      this.form.password = editor.password;
+      this.form.name = editor.name;
+      this.form.path = editor.path;
+      this.form.icon = editor.icon;
+      this.form.sort = editor.sort;
     },
     onEditorHandler(formName) {
       this.$refs[formName].validate(async valid => {
         if (valid) {
           this.disabled = true;
-          userApi.update(this.form).then(res => {
+          menuApi.update(this.form).then(res => {
             this.disabled = false;
             if ('Biz_Ok_Response' === res.code) {
               this.$message.success('更新成功。');
@@ -121,19 +179,21 @@ export default {
     onPreAddHandler() {
       this.$store.commit('messengerStore/setDialogCurrentView', this.$options.name);
       this.$store.commit('messengerStore/setDialogVisible', true);
-      this.$store.commit('messengerStore/setDialogTitle', '账户新增');
+      this.$store.commit('messengerStore/setDialogTitle', '菜单新增');
       this.$store.commit('messengerStore/setDialogWidth', '46%');
       this.$store.commit('messengerStore/setDialogFooter', false);
       this.currentAction = 'add';
       this.form.id = '';
-      this.form.username = '';
-      this.form.password = '';
+      this.form.name = '';
+      this.form.path = '';
+      this.form.icon = '';
+      this.form.sort = 0;
     },
     onAddHandler(formName) {
       this.$refs[formName].validate(async valid => {
         if (valid) {
           this.disabled = true;
-          userApi.add(this.form).then(res => {
+          menuApi.add(this.form).then(res => {
             this.disabled = false;
             if ('Biz_Ok_Response' === res.code) {
               this.$message.success('新增成功。');
@@ -157,7 +217,7 @@ export default {
     fetchPageable() {
       Object.assign(this.pageableQry, this.formSearch);
       console.log(this.pageableQry);
-      userApi.fetchPageable(this.pageableQry).then(res => {
+      menuApi.fetchPageable(this.pageableQry).then(res => {
         this.pageableQry.total = res.data.total;
         this.tableData = res.data.list;
       })

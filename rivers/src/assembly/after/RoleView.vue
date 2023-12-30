@@ -3,8 +3,8 @@
     <div class="search-layout">
       <div class="search-title"/>
       <el-form :inline="true" :model="formSearch">
-        <el-form-item label="账户名称：">
-          <el-input v-model="formSearch.username" placeholder="账户名称"/>
+        <el-form-item label="角色名称：">
+          <el-input v-model="formSearch.name" placeholder="角色名称"/>
         </el-form-item>
 
         <el-form-item>
@@ -16,8 +16,7 @@
     <div class="table-layout">
       <el-table :data="tableData" style="width: 100%" height="440">
         <el-table-column fixed prop="id" label="标识" width="200"/>
-        <el-table-column prop="username" label="账号" width="200"/>
-        <el-table-column prop="password" label="密码" width="200"/>
+        <el-table-column prop="name" label="角色名称" width="200"/>
         <el-table-column prop="createdBy" label="创建人" width="200"/>
         <el-table-column prop="createdDate" label="创建时间" width="200"/>
         <el-table-column prop="lastModifiedBy" label="最后修改人" width="200"/>
@@ -25,7 +24,6 @@
         <el-table-column fixed="right" label="操作" width="120">
           <template #default="scope">
             <el-button link type="primary" size="small" @click="onPreEditorHandler(scope.row)">编辑</el-button>
-            <el-button link type="primary" size="small" @click="onPreEditorHandler(scope.row)">分配角色</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -40,11 +38,8 @@
       <!--<template v-slot:header></template>-->
       <template v-slot:body>
         <el-form class="login" status-icon :model="form" ref="formRef">
-          <el-form-item prop="username" :rules="[{required: true, message: '账号 空', trigger: 'blur'}]">
-            <el-input v-model="form.username" placeholder="账号" prefix-icon="User" clearable/>
-          </el-form-item>
-          <el-form-item prop="password" :rules="[{required: true, message: '密码 空', trigger: 'blur'}]">
-            <el-input v-model="form.password" placeholder="密码" prefix-icon="Key" show-password clearable/>
+          <el-form-item prop="name" :rules="[{required: true, message: '角色名称 空', trigger: 'blur'}]">
+            <el-input v-model="form.name" placeholder="角色名称" prefix-icon="User" clearable/>
           </el-form-item>
           <el-form-item>
             <el-button v-if="currentAction === 'add'" type="primary" icon="Plus" circle plain
@@ -59,22 +54,20 @@
   </div>
 </template>
 <script>
-import {comicApi} from '@/api/index.js';
-import {userApi} from "@/api/index.js";
+import {roleApi} from "@/api/index.js";
 
 export default {
-  name: 'AccountView',
+  name: 'RoleView',
   data() {
     return {
       currentAction: '',
       form: {
         id: '',
-        username: '',
-        password: ''
+        name: ''
       },
       disabled: false,
       formSearch: {
-        username: ''
+        name: ''
       },
       tableData: [],
       pageableQry: {
@@ -97,14 +90,13 @@ export default {
       this.currentAction = 'editor';
 
       this.form.id = editor.id;
-      this.form.username = editor.username;
-      this.form.password = editor.password;
+      this.form.name = editor.name;
     },
     onEditorHandler(formName) {
       this.$refs[formName].validate(async valid => {
         if (valid) {
           this.disabled = true;
-          userApi.update(this.form).then(res => {
+          roleApi.update(this.form).then(res => {
             this.disabled = false;
             if ('Biz_Ok_Response' === res.code) {
               this.$message.success('更新成功。');
@@ -121,19 +113,18 @@ export default {
     onPreAddHandler() {
       this.$store.commit('messengerStore/setDialogCurrentView', this.$options.name);
       this.$store.commit('messengerStore/setDialogVisible', true);
-      this.$store.commit('messengerStore/setDialogTitle', '账户新增');
+      this.$store.commit('messengerStore/setDialogTitle', '角色新增');
       this.$store.commit('messengerStore/setDialogWidth', '46%');
       this.$store.commit('messengerStore/setDialogFooter', false);
       this.currentAction = 'add';
       this.form.id = '';
-      this.form.username = '';
-      this.form.password = '';
+      this.form.name = '';
     },
     onAddHandler(formName) {
       this.$refs[formName].validate(async valid => {
         if (valid) {
           this.disabled = true;
-          userApi.add(this.form).then(res => {
+          roleApi.add(this.form).then(res => {
             this.disabled = false;
             if ('Biz_Ok_Response' === res.code) {
               this.$message.success('新增成功。');
@@ -157,7 +148,7 @@ export default {
     fetchPageable() {
       Object.assign(this.pageableQry, this.formSearch);
       console.log(this.pageableQry);
-      userApi.fetchPageable(this.pageableQry).then(res => {
+      roleApi.fetchPageable(this.pageableQry).then(res => {
         this.pageableQry.total = res.data.total;
         this.tableData = res.data.list;
       })

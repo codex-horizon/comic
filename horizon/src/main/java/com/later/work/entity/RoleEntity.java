@@ -19,6 +19,6 @@ public class RoleEntity  extends AbstractPoEntity implements Serializable {
     private static final long serialVersionUUID = 1L;
 
     @Column(name = "name", nullable = false, columnDefinition = "varchar(256) comment '名称'")
-    private Long name;
+    private String name;
 
 }
