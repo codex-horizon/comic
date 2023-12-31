@@ -22,6 +22,9 @@
 </template>
 
 <script>
+import {userApi} from '@/api/index.js';
+import {setSession} from "@/utils";
+
 export default {
   name: 'LoginView',
   data() {
@@ -31,7 +34,7 @@ export default {
         username: '',
         password: ''
       },
-      disabled:false
+      disabled: false
     }
   },
   props: {},
@@ -41,16 +44,29 @@ export default {
     handlerAuthentication(formName) {
       this.$refs[formName].validate(async valid => {
         if (valid) {
-          this.disabled = true;
-          this.$message({
-            message: '登录成功',
-            type: 'success',
-            grouping: true,
-            center: true,
-            duration: 1000,
-            onClose: () => this.$router.push('/index')
-          });
-          return true;
+          userApi.authentication(this.form).then(res => {
+            this.disabled = true;
+            if ('Biz_Ok_Response' === res.code) {
+              const data = res.data;
+              for (const key in data) {
+                setSession(key, JSON.stringify(data[key]));
+                document.cookie = `UUID=${key}`;
+              }
+              this.$message({
+                message: '登录成功',
+                type: 'success',
+                grouping: true,
+                center: true,
+                duration: 1000,
+                onClose: () => this.$router.push('/index')
+              });
+              return true;
+            }
+            if ('Biz_Failed_Response' === res.code) {
+              this.$message.error(res.message);
+            }
+            return false;
+          })
         } else {
           return false;
         }

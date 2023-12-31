@@ -16,7 +16,7 @@ public interface IUserService {
 
     Long update(UserBo userBo);
 
-    Object login(UserBo userBo);
-
     Boolean delete(Long id);
+
+    Object authentication(UserBo userBo);
 }

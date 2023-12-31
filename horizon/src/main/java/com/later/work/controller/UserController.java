@@ -43,14 +43,13 @@ public class UserController {
         return IResult.Result.succeeded(iUserService.update(iConverter.convert(userDto, UserBo.class)));
     }
 
-    @RequestMapping(name = "用户登录", path = "/login", method = RequestMethod.POST)
-    IResult<?> login(@RequestBody @Validated(GroupValidator.Login.class) UserDto userDto) {
-        return IResult.Result.succeeded(iUserService.login(iConverter.convert(userDto, UserBo.class)));
-    }
-
     @RequestMapping(name = "用户删除", path = "/delete/{id}", method = RequestMethod.POST)
     IResult<Boolean> delete(@PathVariable("id")Long id) {
         return IResult.Result.succeeded(iUserService.delete(id));
     }
 
+    @RequestMapping(name = "用户认证", path = "/authentication", method = RequestMethod.POST)
+    IResult<?> login(@RequestBody @Validated(GroupValidator.Authentication.class) UserDto userDto) {
+        return IResult.Result.succeeded(iUserService.authentication(iConverter.convert(userDto, UserBo.class)));
+    }
 }

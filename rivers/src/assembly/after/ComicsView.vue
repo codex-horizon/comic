@@ -57,6 +57,7 @@
 </template>
 <script>
 import {comicApi} from '@/api/index.js';
+import {getCookie} from "@/utils";
 
 export default {
   name: 'ComicsView',
@@ -87,7 +88,7 @@ export default {
     fetchPageable() {
       Object.assign(this.pageableQry, this.formSearch);
       console.log(this.pageableQry);
-      comicApi.fetchPageable(this.pageableQry).then(res => {
+      comicApi.fetchPageable({'xToken': getCookie('UUID')}, this.pageableQry).then(res => {
         this.pageableQry.total = res.data.total;
         this.tableData = res.data.list;
       })

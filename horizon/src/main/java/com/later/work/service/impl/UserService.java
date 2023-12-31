@@ -3,6 +3,7 @@ package com.later.work.service.impl;
 import com.later.common.constants.Constants;
 import com.later.common.converter.IConverter;
 import com.later.common.exception.BizException;
+import com.later.common.helper.XTokenHelper;
 import com.later.common.restful.IPageable;
 import com.later.work.bo.UserBo;
 import com.later.work.entity.*;
@@ -10,6 +11,7 @@ import com.later.work.qry.UserQry;
 import com.later.work.repository.*;
 import com.later.work.service.IUserService;
 import com.later.work.vo.ComicVo;
+import com.later.work.vo.MenuVo;
 import com.later.work.vo.RoleVo;
 import com.later.work.vo.UserVo;
 import org.springframework.data.domain.Example;
@@ -22,9 +24,8 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
 import javax.persistence.criteria.Predicate;
-import java.util.ArrayList;
+import java.util.*;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -42,18 +43,26 @@ public class UserService implements IUserService {
 
     private final IComicRepository iComicRepository;
 
+    private final IMenuRepository iMenuRepository;
+
+    private final IRoleMenuRepository iRoleMenuRepository;
+
     UserService(final IConverter iConverter,
                 final IUserRepository iUserRepository,
                 final IUserRoleRepository iUserRoleRepository,
                 final IRoleRepository iRoleRepository,
                 final IUserComicRepository iUserComicRepository,
-                final IComicRepository iComicRepository) {
+                final IComicRepository iComicRepository,
+                final IMenuRepository iMenuRepository,
+                final IRoleMenuRepository iRoleMenuRepository) {
         this.iConverter = iConverter;
         this.iUserRepository = iUserRepository;
         this.iUserRoleRepository = iUserRoleRepository;
         this.iRoleRepository = iRoleRepository;
         this.iUserComicRepository = iUserComicRepository;
         this.iComicRepository = iComicRepository;
+        this.iMenuRepository = iMenuRepository;
+        this.iRoleMenuRepository = iRoleMenuRepository;
     }
 
     @Override
@@ -165,22 +174,50 @@ public class UserService implements IUserService {
     }
 
     @Override
-    public Object login(UserBo userBo) {
-        UserEntity userEntity = new UserEntity();
-        userEntity.setUsername(userBo.getUsername());
-        userEntity.setPassword(userBo.getPassword());
-//        if(iUserRepository.exists(Example.of(userEntity))){
-//        }
-//        Long id = iUserRepository.findOne(Example.of(userEntity)).orElseThrow(() -> new BizException(Constants.BizStatus.User_Not_Exists)).getId();
-//        throw new BizException(Constants.BizStatus.User_Not_Exists);
-        return iUserRepository.exists(Example.of(userEntity));
-    }
-
-    @Override
     public Boolean delete(Long id) {
         iUserRepository.deleteById(id);
         return true;
     }
 
+    @Override
+    public Map<String, List<MenuVo>> authentication(UserBo userBo) {
+        UserEntity userEntity = new UserEntity();
+        userEntity.setUsername(userBo.getUsername());
+        userEntity.setPassword(userBo.getPassword());
+        Optional<UserEntity> optionalUserEntity = iUserRepository.findOne(Example.of(userEntity));
+        if (optionalUserEntity.isPresent()) {
+            Long id = optionalUserEntity.get().getId();
+            Map<String, Long> payload = new HashMap<>();
+            payload.put("id", id);
+            String xToken = XTokenHelper.generateXToken(payload);
+            Map<String, List<MenuVo>> result = new HashMap<>();
+            if (userBo.getUsername().equals("admin")) {
+                List<MenuEntity> menuEntities = iMenuRepository.findAll();
+                List<MenuVo> menuVos = iConverter.convert(menuEntities, MenuVo.class);
+                result.put(xToken, menuVos);
+            } else {
+                UserRoleEntity userRoleEntity = new UserRoleEntity();
+                userRoleEntity.setUserId(id);
+                Optional<UserRoleEntity> optionalUserRoleEntity = iUserRoleRepository.findOne(Example.of(userRoleEntity));
+                if (!optionalUserRoleEntity.isPresent()) {
+                    throw new BizException(Constants.BizStatus.User_Not_Relevancy_Role);
+                }
+                Optional<RoleEntity> optionalRoleEntity = iRoleRepository.findById(optionalUserRoleEntity.get().getRoleId());
+                if (!optionalRoleEntity.isPresent()) {
+                    throw new BizException(Constants.BizStatus.Role_Not_Exists);
+                }
+                RoleMenuEntity roleMenuEntity = new RoleMenuEntity();
+                roleMenuEntity.setRoleId(optionalRoleEntity.get().getId());
+                List<RoleMenuEntity> roleMenuEntities = iRoleMenuRepository.findAll(Example.of(roleMenuEntity));
+
+                List<MenuEntity> menuEntities = iMenuRepository.findAllById(roleMenuEntities.stream().map(RoleMenuEntity::getMenuId).collect(Collectors.toList()));
+                List<MenuVo> menuVos = iConverter.convert(menuEntities, MenuVo.class);
+                result.put(xToken, menuVos);
+            }
+            return result;
+        } else {
+            throw new BizException(Constants.BizStatus.User_Not_Exists);
+        }
+    }
 
 }

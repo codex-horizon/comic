@@ -1,13 +1,13 @@
 <template>
   <div class="module-container">
     <ul class="menu-list">
-      <li class="menu-item" v-for="(menu,index) in menus" :key="index">
+      <li class="menu-item" v-for="({name, path, icon}, index) in menus" :key="index">
         <div class="menu-item-layout">
-          <router-link :to="menu.route">
+          <router-link :to="path">
             <el-icon>
-              <component :is="menu.icon"/>
+              <component :is="icon"/>
             </el-icon>
-            <span class="menu-name" v-html="menu.name"/>
+            <span class="menu-name" v-html="name"/>
           </router-link>
         </div>
       </li>
@@ -16,6 +16,7 @@
 </template>
 
 <script>
+import {getCookie, getSession} from '@/utils';
 
 export default {
   name: "MenuView",
@@ -23,7 +24,7 @@ export default {
     return {
       menus: [
         {
-          name:'主&#12288;&#12288;页',
+          name: '主&#12288;&#12288;页',
           route: '/home.html',
           icon: 'House'
         },
@@ -52,7 +53,10 @@ export default {
   },
   props: {},
   components: {},
-  methods: {}
+  methods: {},
+  created() {
+    this.menus = JSON.parse(getSession(getCookie('UUID')));
+  }
 };
 </script>
 

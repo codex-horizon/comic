@@ -68,6 +68,7 @@
 
 <script>
 import MenuView from '@/assembly/after/components/MenuView.vue';
+import {clearSession} from "@/utils";
 
 export default {
   name: "IndexView",
@@ -88,6 +89,7 @@ export default {
       this.$store.commit('messengerStore/setDialogFooter', false);
     },
     exitLogoutHandler() {
+      clearSession();
       this.$message({
         message: '退出注销成功',
         type: 'success',

@@ -59,8 +59,12 @@ public class Constants {
         Sso_User_Details_Not_Exists("Sso_User_Details_Not_Found", "Sso用户详情不存在"),
 
         User_Exists("User_Exists", "用户已存在"),
+        User_Not_Exists("User_Not_Exists", "用户不存在"),
         Role_Exists("Role_Exists", "角色已存在"),
+        Role_Not_Exists("Role_Not_Exists", "角色不存在"),
         Menu_Exists("Menu_Exists", "菜单已存在"),
+
+        User_Not_Relevancy_Role("User_Not_Relevancy_Role", "用户未关联角色"),
 
         ;
 

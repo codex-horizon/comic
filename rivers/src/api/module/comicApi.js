@@ -2,8 +2,8 @@
 import {post} from '@/utils';
 
 export const comicApi = {
-    fetchPageable(qry) {
-        return post('/comic/pageable', {}, qry, {
+    fetchPageable(params,qry) {
+        return post('/comic/pageable', params, qry, {
             'Content-Type':'application/json;charset=utf-8'
         });
     },
