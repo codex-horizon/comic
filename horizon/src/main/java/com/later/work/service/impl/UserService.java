@@ -160,14 +160,19 @@ public class UserService implements IUserService {
         iUserRoleRepository.save(userRoleEntity);
 
         if (!CollectionUtils.isEmpty(userBo.getComicIds())) {
-            List<UserComicEntity> userComicEntities = new ArrayList<>();
-            UserComicEntity userComicEntity;
+            UserComicEntity userComicEntity = new UserComicEntity();
+            userComicEntity.setUserId(id);
+            List<UserComicEntity> userComicEntities = iUserComicRepository.findAll(Example.of(userComicEntity));
+            iUserComicRepository.deleteAll(userComicEntities);
+
+            userComicEntities.clear();
             for (Long comicId : userBo.getComicIds()) {
                 userComicEntity = new UserComicEntity();
                 userComicEntity.setUserId(id);
                 userComicEntity.setComicId(comicId);
                 userComicEntities.add(userComicEntity);
             }
+
             iUserComicRepository.saveAll(userComicEntities);
         }
         return id;

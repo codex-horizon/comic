@@ -26,13 +26,15 @@
         </el-table-column>
         <el-table-column prop="comics" label="漫画集" width="200">
           <template #default="scope">
-            <el-tag v-for="({ name, pic }, index) in scope.row.comics" :key="index" class="text-avatar">
-              <el-avatar v-if="pic" size="small" :src="`http://image.fm1100.com/${pic}`"/>
-              <el-avatar v-else size="small">{{ name.charAt(0) }}</el-avatar>
-              <div class="singe-line">
-                <span v-html="name" style="margin-left: 8px;"></span>
-              </div>
-            </el-tag>
+            <div v-for="({ name, pic }, index) in scope.row.comics" :key="index" style="width: 100%;">
+              <el-tag>
+                <el-avatar v-if="pic" size="small" :src="`http://image.fm1100.com/${pic}`"/>
+                <el-avatar v-else size="small">{{ name.charAt(0) }}</el-avatar>
+                <div class="singe-line">
+                  <span v-html="name" style="margin-left: 8px;"></span>
+                </div>
+              </el-tag>
+            </div>
           </template>
         </el-table-column>
         <el-table-column prop="password" label="密码" width="100"/>
@@ -77,9 +79,11 @@
             <el-select v-model="form.comicIds" placeholder="漫画集" prefix-icon="MilkTea" multiple clearable>
               <el-option v-for="({id, name, pic}, index) in comics" :key="index" :label="name" :value="id">
                 <template #default>
-                  <el-avatar v-if="pic" size="small" :src="`http://image.fm1100.com/${pic}`"/>
-                  <el-avatar v-else size="small">{{ name.charAt(0) }}</el-avatar>
-                  <span v-html="name" style="margin-left: 8px;"></span>
+                  <div style="width: 100%; display: flex; justify-content: left; align-items: center;">
+                    <el-avatar v-if="pic" size="small" :src="`http://image.fm1100.com/${pic}`"/>
+                    <el-avatar v-else size="small">{{ name.charAt(0) }}</el-avatar>
+                    <span v-html="name" style="margin-left: 8px;"></span>
+                  </div>
                 </template>
               </el-option>
             </el-select>
@@ -148,7 +152,6 @@ export default {
       this.$store.commit('messengerStore/setDialogFooter', false);
       this.currentAction = 'editor';
 
-      debugger;
       this.form.id = editor.id;
       this.form.username = editor.username;
       this.form.password = editor.password;
@@ -283,14 +286,18 @@ export default {
     width: 100%;
   }
 
-  .text-avatar, :deep(.el-tag__content), :deep(.el-select-dropdown__item) {
+  :deep(.el-tag) {
+    margin: 0 0 2px;
+  }
+
+  :deep(.el-tag), :deep(.el-tag__content) {
+    width: 100%;
+  }
+
+  :deep(.el-tag__content) {
     display: flex;
     justify-content: left;
     align-items: center;
-  }
-
-  :deep(.el-tag) {
-    margin: 0 0 2px;
   }
 
   .singe-line {

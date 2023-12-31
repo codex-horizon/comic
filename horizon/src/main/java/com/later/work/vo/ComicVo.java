@@ -7,6 +7,7 @@ import lombok.EqualsAndHashCode;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.sql.Timestamp;
+import java.util.List;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
@@ -101,5 +102,7 @@ public class ComicVo extends AbstractVoEntity implements Serializable {
     private Integer gl;
 
     private Integer addtime;
+
+    private List<ComicChapterVo> comicChapters;
 
 }

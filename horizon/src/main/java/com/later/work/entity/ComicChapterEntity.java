@@ -20,7 +20,7 @@ public class ComicChapterEntity extends AbstractPoEntity implements Serializable
     private static final long serialVersionUUID = 1L;
 
     @Column(name = "mid", columnDefinition = "int(11) comment '漫画ID'")
-    private Integer mid;
+    private Long mid;
 
     @Column(name = "xid", columnDefinition = "int(11) comment '排序ID'")
     private Integer xid;
