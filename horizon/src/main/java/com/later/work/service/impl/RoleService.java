@@ -72,11 +72,15 @@ public class RoleService implements IRoleService {
         RoleMenuEntity roleMenuEntity;
         List<RoleVo> roleVos = iConverter.convert(roleEntities, RoleVo.class);
         for (RoleVo roleVo : roleVos) {
-            roleMenuEntity = new RoleMenuEntity();
-            roleMenuEntity.setRoleId(roleVo.getId());
-            List<RoleMenuEntity> roleMenuEntities = iRoleMenuRepository.findAll(Example.of(roleMenuEntity));
-            List<MenuEntity> menuEntities = iMenuRepository.findAllById(roleMenuEntities.stream().map(RoleMenuEntity::getMenuId).collect(Collectors.toList()));
-            roleVo.setMenus(iConverter.convert(menuEntities, MenuVo.class));
+            if (roleVo.getName().equals("管理员")) {
+                roleVo.setMenus(iConverter.convert(iMenuRepository.findAll(), MenuVo.class));
+            } else {
+                roleMenuEntity = new RoleMenuEntity();
+                roleMenuEntity.setRoleId(roleVo.getId());
+                List<RoleMenuEntity> roleMenuEntities = iRoleMenuRepository.findAll(Example.of(roleMenuEntity));
+                List<MenuEntity> menuEntities = iMenuRepository.findAllById(roleMenuEntities.stream().map(RoleMenuEntity::getMenuId).collect(Collectors.toList()));
+                roleVo.setMenus(iConverter.convert(menuEntities, MenuVo.class));
+            }
         }
         return IPageable.Pageable.response(roleEntities.getTotalElements(), roleVos);
     }

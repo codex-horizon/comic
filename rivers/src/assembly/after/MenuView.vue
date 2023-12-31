@@ -72,7 +72,7 @@
             </el-select>
           </el-form-item>
           <el-form-item prop="sort" :rules="[{required: true, message: '排序 空', trigger: 'blur'}]">
-            <el-input-number v-model="form.sort" :min="1" :max="100"/>
+            <el-input-number v-model="form.sort" :min="0" :max="100"/>
           </el-form-item>
           <el-form-item>
             <el-button v-if="currentAction === 'add'" type="primary" icon="Plus" circle plain

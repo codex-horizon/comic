@@ -15,25 +15,27 @@
     </div>
     <div class="table-layout">
       <el-table :data="tableData" style="width: 100%" height="440">
-        <el-table-column fixed prop="id" label="标识" width="200"/>
-        <el-table-column prop="username" label="账号" width="200"/>
-        <el-table-column prop="role" label="角色名称" width="200">
+        <el-table-column fixed prop="id" label="标识" width="120"/>
+        <el-table-column prop="username" label="账号" width="120"/>
+        <el-table-column prop="role" label="角色名称" width="120">
           <template #default="scope">
-            <el-tag type="info">
+            <el-tag :type="scope.row.username !== 'admin'?'info':'success'">
               {{ scope.row?.role?.name }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="comics" label="漫画集" width="260">
+        <el-table-column prop="comics" label="漫画集" width="200">
           <template #default="scope">
-              <el-tag v-for="({ name, pic }, index) in scope.row.comics" :key="index" class="text-avatar">
-                <el-avatar v-if="pic" size="small" :src="`http://image.fm1100.com/${pic}`" />
-                <el-avatar v-else size="small">{{name.charAt(0)}} </el-avatar>
+            <el-tag v-for="({ name, pic }, index) in scope.row.comics" :key="index" class="text-avatar">
+              <el-avatar v-if="pic" size="small" :src="`http://image.fm1100.com/${pic}`"/>
+              <el-avatar v-else size="small">{{ name.charAt(0) }}</el-avatar>
+              <div class="singe-line">
                 <span v-html="name" style="margin-left: 8px;"></span>
-              </el-tag>
+              </div>
+            </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="password" label="密码" width="200"/>
+        <el-table-column prop="password" label="密码" width="100"/>
         <el-table-column prop="createdBy" label="创建人" width="200"/>
         <el-table-column prop="createdDate" label="创建时间" width="200"/>
         <el-table-column prop="lastModifiedBy" label="最后修改人" width="200"/>
@@ -41,7 +43,9 @@
         <el-table-column fixed="right" label="操作" width="120">
           <template #default="scope">
             <el-button link type="primary" size="small" @click="onPreEditorHandler(scope.row)">编辑</el-button>
-            <el-button link type="warning" size="small" @click="onDeleteHandler(scope.row.id)">删除</el-button>
+            <el-button v-if="scope.row.username !== 'admin'" link type="warning" size="small"
+                       @click="onDeleteHandler(scope.row.id)">删除
+            </el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -62,17 +66,19 @@
           <el-form-item prop="password" :rules="[{required: true, message: '密码 空', trigger: 'blur'}]">
             <el-input v-model="form.password" placeholder="密码" prefix-icon="Key" show-password clearable/>
           </el-form-item>
-          <el-form-item prop="roleId" :rules="[{required: true, message: '角色 空', trigger: 'blur'}]">
+          <el-form-item prop="roleId" :rules="[{required: true, message: '角色 空', trigger: 'blur'}]"
+                        v-if="form.username !== 'admin'">
             <el-select v-model="form.roleId" placeholder="角色" prefix-icon="MilkTea" clearable>
               <el-option v-for="({id, name}, index) in roles" :key="index" :label="name" :value="id"/>
             </el-select>
           </el-form-item>
-          <el-form-item prop="comicIds" :rules="[{required: true, message: '漫画集 空', trigger: 'blur'}]">
+          <el-form-item prop="comicIds" :rules="[{required: true, message: '漫画集 空', trigger: 'blur'}]"
+                        v-if="form.username !== 'admin'">
             <el-select v-model="form.comicIds" placeholder="漫画集" prefix-icon="MilkTea" multiple clearable>
               <el-option v-for="({id, name, pic}, index) in comics" :key="index" :label="name" :value="id">
                 <template #default>
-                  <el-avatar v-if="pic" size="small" :src="`http://image.fm1100.com/${pic}`" />
-                  <el-avatar v-else size="small">{{name.charAt(0)}} </el-avatar>
+                  <el-avatar v-if="pic" size="small" :src="`http://image.fm1100.com/${pic}`"/>
+                  <el-avatar v-else size="small">{{ name.charAt(0) }}</el-avatar>
                   <span v-html="name" style="margin-left: 8px;"></span>
                 </template>
               </el-option>
@@ -103,10 +109,10 @@ export default {
         username: '',
         password: '',
         roleId: '',
-        comicIds:[]
+        comicIds: []
       },
       roles: [],
-      comics:[],
+      comics: [],
       disabled: false,
       formSearch: {
         username: ''
@@ -142,6 +148,7 @@ export default {
       this.$store.commit('messengerStore/setDialogFooter', false);
       this.currentAction = 'editor';
 
+      debugger;
       this.form.id = editor.id;
       this.form.username = editor.username;
       this.form.password = editor.password;
@@ -176,6 +183,8 @@ export default {
       this.form.id = '';
       this.form.username = '';
       this.form.password = '';
+      this.form.roleId = '';
+      this.form.comicIds = [];
     },
     onAddHandler(formName) {
       this.$refs[formName].validate(async valid => {
@@ -215,7 +224,7 @@ export default {
         this.roles = res.data;
       })
     },
-    fetchComicList(){
+    fetchComicList() {
       comicApi.fetchList({}).then(res => {
         this.comics = res.data;
       })
@@ -274,14 +283,22 @@ export default {
     width: 100%;
   }
 
-  .text-avatar, :deep(.el-tag__content), :deep(.el-select-dropdown__item){
+  .text-avatar, :deep(.el-tag__content), :deep(.el-select-dropdown__item) {
     display: flex;
     justify-content: left;
     align-items: center;
   }
 
-  :deep(.el-tag){
-    margin:0 0 2px;
+  :deep(.el-tag) {
+    margin: 0 0 2px;
+  }
+
+  .singe-line {
+    text-overflow: ellipsis;
+    overflow: hidden;
+    word-break: break-all;
+    white-space: nowrap;
+    width: 139px;
   }
 }
 </style>

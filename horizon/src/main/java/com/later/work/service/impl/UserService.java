@@ -77,19 +77,28 @@ public class UserService implements IUserService {
         ));
         List<UserVo> userVos = iConverter.convert(userEntities, UserVo.class);
         userVos.forEach(userVo -> {
-            UserRoleEntity userRoleEntity = new UserRoleEntity();
-            userRoleEntity.setUserId(userVo.getId());
-            Optional<UserRoleEntity> optionalUserRoleEntity = iUserRoleRepository.findOne(Example.of(userRoleEntity));
-            if (optionalUserRoleEntity.isPresent()) {
-                Optional<RoleEntity> optionalRoleEntity = iRoleRepository.findById(optionalUserRoleEntity.get().getRoleId());
-                optionalRoleEntity.ifPresent(roleEntity -> userVo.setRole(iConverter.convert(roleEntity, RoleVo.class)));
-            }
+            if (userVo.getUsername().equals("admin")) {
+                userVo.setComics(iConverter.convert(iComicRepository.findAll(), ComicVo.class));
 
-            UserComicEntity userComicEntity = new UserComicEntity();
-            userComicEntity.setUserId(userVo.getId());
-            List<UserComicEntity> userComicEntities = iUserComicRepository.findAll(Example.of(userComicEntity));
-            List<ComicEntity> comicEntities = iComicRepository.findAllById(userComicEntities.stream().map(UserComicEntity::getComicId).collect(Collectors.toList()));
-            userVo.setComics(iConverter.convert(comicEntities, ComicVo.class));
+                RoleEntity roleEntity = new RoleEntity();
+                roleEntity.setName("管理员");
+                Optional<RoleEntity> optionalRoleEntity = iRoleRepository.findOne(Example.of(roleEntity));
+                optionalRoleEntity.ifPresent(entity -> userVo.setRole(iConverter.convert(entity, RoleVo.class)));
+            } else {
+                UserRoleEntity userRoleEntity = new UserRoleEntity();
+                userRoleEntity.setUserId(userVo.getId());
+                Optional<UserRoleEntity> optionalUserRoleEntity = iUserRoleRepository.findOne(Example.of(userRoleEntity));
+                if (optionalUserRoleEntity.isPresent()) {
+                    Optional<RoleEntity> optionalRoleEntity = iRoleRepository.findById(optionalUserRoleEntity.get().getRoleId());
+                    optionalRoleEntity.ifPresent(roleEntity -> userVo.setRole(iConverter.convert(roleEntity, RoleVo.class)));
+                }
+
+                UserComicEntity userComicEntity = new UserComicEntity();
+                userComicEntity.setUserId(userVo.getId());
+                List<UserComicEntity> userComicEntities = iUserComicRepository.findAll(Example.of(userComicEntity));
+                List<ComicEntity> comicEntities = iComicRepository.findAllById(userComicEntities.stream().map(UserComicEntity::getComicId).collect(Collectors.toList()));
+                userVo.setComics(iConverter.convert(comicEntities, ComicVo.class));
+            }
         });
         return IPageable.Pageable.response(userEntities.getTotalElements(), userVos);
     }

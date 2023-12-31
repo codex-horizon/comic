@@ -30,8 +30,8 @@
         <el-table-column prop="lastModifiedDate" label="最后修改时间" width="200"/>
         <el-table-column fixed="right" label="操作" width="120">
           <template #default="scope">
-            <el-button link type="primary" size="small" @click="onPreEditorHandler(scope.row)">编辑</el-button>
-            <el-button link type="warning" size="small" @click="onDeleteHandler(scope.row.id)">删除</el-button>
+            <el-button v-if="scope.row.name !== '管理员'" link type="primary" size="small" @click="onPreEditorHandler(scope.row)">编辑</el-button>
+            <el-button v-if="scope.row.name !== '管理员'" link type="warning" size="small" @click="onDeleteHandler(scope.row.id)">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
