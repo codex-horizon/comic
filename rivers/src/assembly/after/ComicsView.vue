@@ -84,21 +84,122 @@
           <div class="comic-carousel">
             <el-carousel height="380px" :autoplay="false" indicator-position="none" @change="onCarouselChangeHandler">
               <el-carousel-item v-for="({url}, index) in comicPictures" :key="index">
-                <el-image :src="`http://image.fm1100.com/${url}`"/>
+                <div>
+                  <el-image :src="`http://image.fm1100.com/${url}`"/>
+                  <el-tag><span style="width: 100%; text-align: center;">共 <strong>{{ comicPictures.length }}</strong> 张，第 <strong>{{ carouselIndex + 1 }}</strong> 张</span></el-tag>
+                </div>
               </el-carousel-item>
             </el-carousel>
           </div>
           <div class="comic-editor" ref="comicEditor">
             <div class="comic-editor-container">
-              <canvas ref="canvas" id="canvas"/>
+              <canvas ref="drawCanvas" id="drawCanvas"/>
+              <canvas ref="clipCanvas" id="clipCanvas"/>
             </div>
           </div>
           <div class="comic-ribbon">
-            <div class="slider-demo-block">
-              <span class="demonstration">图片缩放：</span>
-              <el-slider v-model="scroll.canvas.sliderModel" :format-tooltip="onSliderFormatHandler" show-input
-                         size="small"/>
-            </div>
+            <el-collapse v-model="collapseModel" accordion>
+              <el-collapse-item title="图片定义缩放" name="1">
+                <template #title>
+                  <el-tag>
+                    <el-icon>
+                      <Picture/>
+                    </el-icon>
+                    <span style="margin-left: 6px;">图片自定义缩放</span></el-tag>
+                </template>
+                <div>
+                  <el-slider v-model="scroll.canvas.sliderModel" :format-tooltip="onSliderFormatHandler" show-input
+                             size="small"/>
+                  <el-slider v-model="scroll.canvas.autoHeight" :format-tooltip="onSliderAutoHeightHandler" show-input
+                             size="small"/>
+                </div>
+              </el-collapse-item>
+              <el-collapse-item title="图片识别翻译 && 文字样式设置" name="2">
+                <template #title>
+                  <el-tag type="info">
+                    <el-icon>
+                      <DataLine/>
+                    </el-icon>
+                    <span style="margin-left: 6px;">图片识别翻译</span>
+                  </el-tag>
+                </template>
+                <div>
+                  <div>
+                    <el-input rows="2" type="textarea" placeholder="原文"/>
+                  </div>
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin: 12px 0 6px;">
+                    <el-switch
+                        v-model="activeOCR"
+                        inline-prompt
+                        style="--el-switch-on-color: #13ce66; --el-switch-off-color: #ff4949"
+                        active-text="OCR开启"
+                        inactive-text="OCR关闭"
+                    />
+                    <el-select v-model="originalLanguage" placeholder="选择原文语言" size="small"
+                               style="margin: 0 12px;">
+                      <el-option v-for="({id, name}, index) in ocrOptionLanguages"
+                                 :key="index" :label="name" :value="id"/>
+                    </el-select>
+                    <el-select v-model="translationLanguage" placeholder="选择译文语言" size="small">
+                      <el-option v-for="({id, name}, index) in ocrOptionLanguages"
+                                 :key="index" :label="name" :value="id"/>
+                    </el-select>
+                  </div>
+                  <div>
+                    <el-input rows="2" type="textarea" placeholder="译文"/>
+                  </div>
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin: 6px 0 12px;">
+                    <el-tooltip
+                        effect="dark"
+                        content="译文字体颜色"
+                        placement="top-start"
+                    >
+                      <el-color-picker v-model="characterColor" show-alpha :predefine="predefineColors"/>
+                    </el-tooltip>
+                    <el-tooltip
+                        effect="dark"
+                        content="译文背景颜色"
+                        placement="top-start"
+                    >
+                      <el-color-picker v-model="backgroundColor" show-alpha :predefine="predefineColors"
+                                       @focus="onBackgroundColorHandler"/>
+                    </el-tooltip>
+                    <el-tooltip
+                        effect="dark"
+                        content="译文字体选项"
+                        placement="top"
+                    >
+                      <el-select v-model="translatedFontModel" placeholder="选择译文字体" size="small" filterable>
+                        <el-option
+                            v-for="({family, fullName}, index) in availableFonts" :key="index" :label="fullName"
+                            :value="family"/>
+                      </el-select>
+                    </el-tooltip>
+                    <el-tooltip
+                        effect="dark"
+                        content="译文字体大小"
+                        placement="top"
+                    >
+                      <el-input-number v-model="translatedFontSizeModel" size="small" :min="9" :max="36"
+                                       controls-position="right"/>
+                    </el-tooltip>
+                  </div>
+                </div>
+              </el-collapse-item>
+              <el-collapse-item title="图片存储操作" name="3">
+                <template #title>
+                  <el-tag type="success">
+                    <el-icon>
+                      <FolderOpened/>
+                    </el-icon>
+                    <span style="margin-left: 6px;">图片存储操作</span></el-tag>
+                </template>
+                <div>
+                  1
+                </div>
+              </el-collapse-item>
+            </el-collapse>
+
           </div>
         </div>
       </template>
@@ -131,6 +232,7 @@ export default {
       comicChaptersOptions: [],
       comicChaptersModel: '',
       comicPictures: [],
+      carouselIndex: 0,
       monitorUrl: '',
 
       scroll: {
@@ -139,61 +241,176 @@ export default {
         height: '',
         canvas: {
           sliderModel: 40,
-          scale: 'scale(.4)'
+          scale: 'scale(.4)',
+          autoHeight: 60,
+          autoHeightModel: '60vh'
         }
       },
 
+      collapseModel: '2',
+      activeOCR: false,
+      ocrOptionLanguages: [
+        {'id': 0, name: '中文'},
+        {'id': 1, name: '韩文'},
+        {'id': 2, name: '英文'},
+      ],
+
+      originalLanguage: 1,
+      translationLanguage: 0,
+
+      predefineColors: [
+        '#ff4500',
+        '#ff8c00',
+        '#ffd700',
+        '#90ee90',
+        '#00ced1',
+        '#1e90ff',
+        '#c71585',
+        'rgba(255, 69, 0, 0.68)',
+        'rgb(255, 120, 0)',
+        'hsv(51, 100, 98)',
+        'hsva(120, 40, 94, 0.5)',
+        'hsl(181, 100%, 37%)',
+        'hsla(209, 100%, 56%, 0.73)',
+        '#c7158577',
+      ],
+      characterColor: 'rgba(0, 0, 0, 1)',
+      backgroundColor: '',
+      availableFonts: [],
+      translatedFontModel: '',
+      translatedFontSizeModel: 12
     }
   },
   methods: {
+    async onBackgroundColorHandler() {
+      if (!window.EyeDropper) {
+        this.$message.warning("你的浏览器不支持 EyeDropper API");
+      } else {
+        const eyeDropper = new window.EyeDropper() // 初始化一个EyeDropper对象
+        this.$message.info("按Esc可退出");
+        try {
+          const result = await eyeDropper.open(); // 开始拾取颜色
+          this.backgroundColor = result.sRGBHex;
+        } catch (e) {
+          this.$message.success("用户取消了取色");
+        }
+      }
+    },
+    onSliderAutoHeightHandler(number){
+      this.scroll.canvas.autoHeight = number
+      this.scroll.canvas.autoHeightModel = `${number}vh`;
+      return number;
+    },
     onSliderFormatHandler(number) {
       this.scroll.canvas.sliderModel = number;
-      debugger;
       const val = number / 100;
-      this.scroll.canvas.scale = `scale(${val})`;
+      this.scroll.canvas.scale = `scale(${val},${val})`;
       return val;
     },
     onCanvasDrawHandler(comicPictureURL) {
-      let canvas = this.$refs.canvas;
-      // 加载图片
+      // 原始画布
+      let drawCanvas = this.$refs.drawCanvas;
+      let drawContext = drawCanvas.getContext('2d');
+      let clipCanvas = this.$refs.clipCanvas;
+      let clipContext = clipCanvas.getContext("2d");
       let image = new Image();
       image.src = new URL(`http://image.fm1100.com/${comicPictureURL}`).href;
       image.onload = function () {
-        // 1. 在创建Canvas元素时，指定与原始图片相同的宽度和高度。
-        canvas.width = image.naturalWidth;
-        canvas.height = image.naturalHeight;
-        // 2. 在绘制图片之前，将Canvas的缩放比例设置为1，以保持与原始图片一致。
-        let context = canvas.getContext('2d');
-        context.scale(1, 1);
+        let width = image.naturalWidth;
+        let height = image.naturalHeight;
+        drawCanvas.width = width;
+        drawCanvas.height = height;
+        drawContext.scale(1, 1);
+        drawContext.drawImage(this, 0, 0);
 
-        // 3. 使用 drawImage 方法将原始图片绘制到Canvas上。
-        context.drawImage(image, 0, 0);
+        clipCanvas.width = width;
+        clipCanvas.height = height;
+        clipContext.scale(1, 1);
+        // clipContext.drawImage(this, 0, 0);
+        //
+        // // 蒙版
+        clipContext.fillStyle = 'rgba(0,0,0,0.6)';
+        clipContext.strokeStyle = "green";
+        let start = null;
+        let clipArea = {};//裁剪范围
+        clipCanvas.onmousedown = function (e) {
+          start = {
+            x: e.offsetX,
+            y: e.offsetY
+          };
+        }
+        clipCanvas.onmousemove = function (e) {
+          if (start) {
+            fill(start.x, start.y, e.offsetX - start.x, e.offsetY - start.y)
+          }
+        }
+        document.addEventListener("mouseup", function () {
+          if (start) {
+            start = null;
+            let url = startClip(clipArea);
+            console.log(url);
+          }
+        })
 
-        // context.fillStyle=context.createPattern(image,'no-repeat');
+        function fill(x, y, w, h) {
+          clipContext.clearRect(0, 0, width, height);
+          clipContext.beginPath();
+          //遮罩层
+          clipContext.globalCompositeOperation = "source-over";
+          clipContext.fillRect(0, 0, width, height);
+          //画框
+          clipContext.globalCompositeOperation = 'destination-out';
+          clipContext.fillRect(x, y, w, h);
+          //描边
+          clipContext.globalCompositeOperation = "source-over";
+          clipContext.moveTo(x, y);
+          clipContext.lineTo(x + w, y);
+          clipContext.lineTo(x + w, y + h);
+          clipContext.lineTo(x, y + h);
+          clipContext.lineTo(x, y);
+          clipContext.stroke();
+          clipContext.closePath();
+          clipArea = {
+            x,
+            y,
+            w,
+            h
+          };
+        }
 
-        // 添加文字
-        // context.font = '24px Arial';
-        // context.fillStyle = 'red';
-        // context.fillText('Hello, World!', 50, 50);
+        function startClip(area) {
+          let canvas = document.createElement("canvas");
+          canvas.width = area.w;
+          canvas.height = area.h;
 
-        // let dataURL = canvas.toDataURL();
-        // let newImage = document.createElement('img');
-        // newImage.src = dataURL;
-        // document.body.appendChild(newImage);
+          let data = clipContext.getImageData(area.x, area.y, area.w, area.h);
+          let context = canvas.getContext("2d");
+          context.putImageData(data, 0, 0);
+          return canvas.toDataURL("image/png");
+        }
       }
-
     },
-    onInitializeCanvasLayoutHandler() {
+    async onInitializeCanvasLayoutHandler() {
       if (!this.scroll.lock) {
         this.scroll.lock = true;
         let comicEditor = this.$refs.comicEditor;
         this.scroll.width = comicEditor.scrollWidth - (8 * 2) + 'px';
         this.scroll.height = comicEditor.scrollHeight - (8 * 2) + 'px';
       }
+      if (!window.queryLocalFonts) {
+        this.$message.warning("你的浏览器不支持 queryLocalFonts API");
+      } else {
+        const availableLocalFonts = await window.queryLocalFonts();
+        this.availableFonts = availableLocalFonts.map(fontData => ({
+          family: fontData.family,
+          fullName: fontData.fullName,
+        }));
+      }
     },
     onCarouselChangeHandler(index) {
       this.onInitializeCanvasLayoutHandler();
       this.onCanvasDrawHandler(this.comicPictures[index].url);
+      setTimeout(() => this.carouselIndex = index, 500);
     },
     onComicChaptersChangeHandler(comicChapter) {
       this.onInitializeCanvasLayoutHandler();
@@ -206,9 +423,10 @@ export default {
       this.$store.commit('messengerStore/setDialogTitle', `漫画编辑：${editor.name}`);
       this.$store.commit('messengerStore/setDialogWidth', '96%');
       this.$store.commit('messengerStore/setDialogFooter', false);
+      this.$store.commit('messengerStore/setDialogFullScreen', true);
       this.currentAction = 'editor';
 
-      console.log(editor.comicChapters);
+
       this.comicChaptersOptions = editor.comicChapters;
     },
     onSearchQuery() {
@@ -304,21 +522,40 @@ export default {
         justify-content: center;
         align-items: center;
       }
+
+      :deep(.el-carousel__arrow--left) {
+        color: #ff0;
+        background-color: #000000b8;
+      }
+
+      :deep(.el-carousel__arrow--right) {
+        color: #ff0;
+        background-color: #000000b8;
+      }
     }
 
     .comic-editor {
       flex: 1 1 auto;
-      background-color: #f6f6f6;
 
       .comic-editor-container {
         width: v-bind('scroll.width');
-        height: v-bind('scroll.height');
+        //height: v-bind('scroll.height');
+        height: v-bind('scroll.canvas.autoHeightModel');
         overflow: auto;
+        position: relative;
 
-        #canvas {
+        #drawCanvas, #clipCanvas {
           transform: v-bind('scroll.canvas.scale');
-          //image-rendering: pixelated;
-          //display: block;
+        }
+
+        #drawCanvas {
+          position: absolute;
+          z-index: 1;
+        }
+
+        #clipCanvas {
+          position: absolute;
+          z-index: 2;
         }
       }
 

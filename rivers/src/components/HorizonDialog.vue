@@ -1,6 +1,7 @@
 <template>
-  <el-dialog
+  <el-dialog ref="dialog"
       v-model="dialogVisible"
+      :fullscreen="Boolean(dialogFullscreen)"
       v-bind:before-close=" () => this.$store.commit('messengerStore/setDialogVisible', false) "
       v-bind:title="`${dialogTitle}`"
       v-bind:width="`${dialogWidth}`"
@@ -42,6 +43,9 @@ export default {
     },
     dialogFooter: function () {
       return this.$store.getters['messengerStore/getDialogFooter'];
+    },
+    dialogFullscreen: function () {
+      return this.$store.getters['messengerStore/getDialogFullScreen'];
     },
     // 对象形式的计算属性
     dialogVisible: {
