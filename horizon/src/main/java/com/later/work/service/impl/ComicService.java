@@ -5,17 +5,12 @@ import com.later.common.converter.IConverter;
 import com.later.common.helper.RequestHelper;
 import com.later.common.helper.XTokenHelper;
 import com.later.common.restful.IPageable;
-import com.later.work.entity.ComicChapterEntity;
-import com.later.work.entity.ComicEntity;
-import com.later.work.entity.UserComicEntity;
-import com.later.work.entity.UserEntity;
+import com.later.work.entity.*;
 import com.later.work.qry.ComicQry;
-import com.later.work.repository.IComicChapterRepository;
-import com.later.work.repository.IComicRepository;
-import com.later.work.repository.IUserComicRepository;
-import com.later.work.repository.IUserRepository;
+import com.later.work.repository.*;
 import com.later.work.service.IComicService;
 import com.later.work.vo.ComicChapterVo;
+import com.later.work.vo.ComicPictureVo;
 import com.later.work.vo.ComicVo;
 import org.springframework.data.domain.Example;
 import org.springframework.data.domain.Page;
@@ -42,20 +37,24 @@ public class ComicService implements IComicService {
 
     private final IUserComicRepository iUserComicRepository;
 
-    private IComicChapterRepository iComicChapterRepository;
+    private final IComicChapterRepository iComicChapterRepository;
 
-    private IUserRepository iUserRepository;
+    private final IUserRepository iUserRepository;
+
+    private final IComicPictureRepository iComicPictureRepository;
 
     ComicService(final IConverter iConverter,
                  final IComicRepository iComicRepository,
                  final IUserComicRepository iUserComicRepository,
                  final IComicChapterRepository iComicChapterRepository,
-                 final IUserRepository iUserRepository) {
+                 final IUserRepository iUserRepository,
+                 final IComicPictureRepository iComicPictureRepository) {
         this.iConverter = iConverter;
         this.iComicRepository = iComicRepository;
         this.iUserComicRepository = iUserComicRepository;
         this.iComicChapterRepository = iComicChapterRepository;
         this.iUserRepository = iUserRepository;
+        this.iComicPictureRepository = iComicPictureRepository;
     }
 
     @Override
@@ -96,7 +95,16 @@ public class ComicService implements IComicService {
             ComicChapterEntity comicChapterEntity = new ComicChapterEntity();
             comicChapterEntity.setMid(comicVo.getId());
             List<ComicChapterEntity> comicChapterEntities = iComicChapterRepository.findAll(Example.of(comicChapterEntity));
-            comicVo.setComicChapters(iConverter.convert(comicChapterEntities, ComicChapterVo.class));
+            List<ComicChapterVo> comicChapterVos = iConverter.convert(comicChapterEntities, ComicChapterVo.class);
+            comicChapterVos.forEach(comicChapterVo -> {
+                ComicPictureEntity comicPictureEntity = new ComicPictureEntity();
+                comicPictureEntity.setMid(comicVo.getId());
+                comicPictureEntity.setZid(comicChapterVo.getId());
+                List<ComicPictureEntity> comicPictureEntities = iComicPictureRepository.findAll(Example.of(comicPictureEntity));
+                List<ComicPictureVo> comicPictureVos = iConverter.convert(comicPictureEntities, ComicPictureVo.class);
+                comicChapterVo.setComicPictures(comicPictureVos);
+            });
+            comicVo.setComicChapters(comicChapterVos);
         });
         return IPageable.Pageable.response(comicEntities.getTotalElements(), comicVos);
     }

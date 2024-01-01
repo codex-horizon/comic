@@ -12,5 +12,16 @@ public class ComicPictureBo extends AbstractBoEntity implements Serializable {
 
     private static final long serialVersionUUID = 1L;
 
+    private Long mid;
+
+    private Long zid;
+
+    private String url;
+
+    private String ypic;
+
+    private Integer height;
+
+    private Integer xid;
 
 }

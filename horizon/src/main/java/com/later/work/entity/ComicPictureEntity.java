@@ -19,10 +19,10 @@ public class ComicPictureEntity extends AbstractPoEntity implements Serializable
     private static final long serialVersionUUID = 1L;
 
     @Column(name = "mid", columnDefinition = "int(11) comment '漫画ID'")
-    private Integer mid;
+    private Long mid;
 
     @Column(name = "zid", columnDefinition = "int(11) comment '章节ID'")
-    private Integer zid;
+    private Long zid;
 
     @Column(name = "url", columnDefinition = "varchar(256) comment '图片url地址'")
     private String url;

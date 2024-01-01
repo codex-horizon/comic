@@ -4,9 +4,9 @@ import com.later.core.repository.entity.AbstractVoEntity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
-import javax.persistence.Column;
 import java.io.Serializable;
 import java.sql.Timestamp;
+import java.util.List;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
@@ -36,4 +36,5 @@ public class ComicChapterVo extends AbstractVoEntity implements Serializable {
 
     private Timestamp ctime;
 
+    private List<ComicPictureVo> comicPictures;
 }
