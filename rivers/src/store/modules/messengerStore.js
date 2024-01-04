@@ -11,7 +11,6 @@ export default {
             visible: false,
             title: '对话框',
             width: '36%',
-            footer: true,
             fullScreen:false
         },
         table: {
@@ -64,9 +63,6 @@ export default {
         getDialogWidth: state => {
             return state.dialog.width;
         },
-        getDialogFooter: state => {
-            return state.dialog.footer;
-        },
         getDialogFullScreen: state => {
             return state.dialog.fullScreen;
         },
@@ -107,9 +103,6 @@ export default {
         },
         setDialogWidth(state, width) {
             state.dialog.width = width;
-        },
-        setDialogFooter(state, footer) {
-            state.dialog.footer = footer;
         },
         setDialogFullScreen(state, fullScreen) {
             state.dialog.fullScreen = fullScreen;

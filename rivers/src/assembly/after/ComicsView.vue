@@ -13,8 +13,7 @@
       </el-form>
     </div>
     <div class="table-layout">
-      <el-table :data="tableData" style="width: 100%" height="440"
-                :default-sort="{ prop: 'comicId', order: 'descending' }">
+      <el-table :data="tableData" style="width: 100%" height="440">
         <el-table-column fixed sortable prop="comicId" label="漫画识别号" width="200"/>
         <el-table-column prop="name" label="漫画名称" width="200"/>
         <el-table-column prop="pic" label="竖版封面" width="200">
@@ -63,6 +62,7 @@
     <HorizonDialog v-if="this.$options.name === this.$store.getters['messengerStore/getDialogCurrentView']">
       <!--<template v-slot:header></template>-->
       <template v-slot:body>
+        <!-- 编辑章节区域 -->
         <div class="comic-chapters-layout">
           <el-select v-model="comicChaptersModel" placeholder="请选择编辑的章节" @change="onComicChaptersChangeHandler"
                      style="width: 100%;">
@@ -80,26 +80,34 @@
             </el-option>
           </el-select>
         </div>
+        <!-- 图片功能区域 -->
         <div class="comic-editor-layout">
+          <!-- 图片展示区域 -->
           <div class="comic-carousel">
-            <el-carousel height="380px" :autoplay="false" indicator-position="none" @change="onCarouselChangeHandler">
+            <el-carousel height="auto" :autoplay="false" indicator-position="none" @change="onCarouselChangeHandler">
               <el-carousel-item v-for="({url}, index) in comicPictures" :key="index">
                 <div>
                   <el-image :src="`http://image.fm1100.com/${url}`"/>
-                  <el-tag><span style="width: 100%; text-align: center;">共 <strong>{{ comicPictures.length }}</strong> 张，第 <strong>{{ carouselIndex + 1 }}</strong> 张</span></el-tag>
+                  <el-tag><span style="width: 100%; text-align: center;">共 <strong>{{ comicPictures.length }}</strong> 张，第 <strong>{{
+                      carouselIndex + 1
+                    }}</strong> 张</span></el-tag>
                 </div>
               </el-carousel-item>
             </el-carousel>
           </div>
-          <div class="comic-editor" ref="comicEditor">
-            <div class="comic-editor-container">
+
+          <!-- 图片工作区域 -->
+          <div class="comic-editor">
+            <div class="comic-editor-container" ref="wrap">
               <canvas ref="drawCanvas" id="drawCanvas"/>
               <canvas ref="clipCanvas" id="clipCanvas"/>
             </div>
           </div>
+
+          <!-- 图片功能区域 -->
           <div class="comic-ribbon">
             <el-collapse v-model="collapseModel" accordion>
-              <el-collapse-item title="图片定义缩放" name="1">
+              <el-collapse-item name="1">
                 <template #title>
                   <el-tag>
                     <el-icon>
@@ -110,11 +118,9 @@
                 <div>
                   <el-slider v-model="scroll.canvas.sliderModel" :format-tooltip="onSliderFormatHandler" show-input
                              size="small"/>
-                  <el-slider v-model="scroll.canvas.autoHeight" :format-tooltip="onSliderAutoHeightHandler" show-input
-                             size="small"/>
                 </div>
               </el-collapse-item>
-              <el-collapse-item title="图片识别翻译 && 文字样式设置" name="2">
+              <el-collapse-item name="2">
                 <template #title>
                   <el-tag type="info">
                     <el-icon>
@@ -186,7 +192,7 @@
                   </div>
                 </div>
               </el-collapse-item>
-              <el-collapse-item title="图片存储操作" name="3">
+              <el-collapse-item name="3">
                 <template #title>
                   <el-tag type="success">
                     <el-icon>
@@ -195,27 +201,26 @@
                     <span style="margin-left: 6px;">图片存储操作</span></el-tag>
                 </template>
                 <div>
-                  1
+                  <img src="" ref="img" id="img">
                 </div>
               </el-collapse-item>
             </el-collapse>
-
           </div>
         </div>
       </template>
-      <!--<template v-slot:footer></template>-->
+      <!--      <template v-slot:footer></template>-->
     </HorizonDialog>
   </div>
 </template>
 <script>
 import {comicApi} from '@/api/index.js';
-import {getCookie} from "@/utils";
+import {getCookie, xhr} from "@/utils";
+import Tesseract from 'tesseract.js';
 
 export default {
   name: 'ComicsView',
   data() {
     return {
-      currentAction: '',
       formSearch: {
         name: ''
       },
@@ -233,17 +238,11 @@ export default {
       comicChaptersModel: '',
       comicPictures: [],
       carouselIndex: 0,
-      monitorUrl: '',
 
       scroll: {
-        lock: false,
-        width: '',
-        height: '',
         canvas: {
-          sliderModel: 40,
-          scale: 'scale(.4)',
-          autoHeight: 60,
-          autoHeightModel: '60vh'
+          sliderModel: 100,
+          scale: 'scale(1)'
         }
       },
 
@@ -296,107 +295,141 @@ export default {
         }
       }
     },
-    onSliderAutoHeightHandler(number){
-      this.scroll.canvas.autoHeight = number
-      this.scroll.canvas.autoHeightModel = `${number}vh`;
-      return number;
-    },
     onSliderFormatHandler(number) {
       this.scroll.canvas.sliderModel = number;
       const val = number / 100;
       this.scroll.canvas.scale = `scale(${val},${val})`;
       return val;
     },
-    onCanvasDrawHandler(comicPictureURL) {
-      // 原始画布
-      let drawCanvas = this.$refs.drawCanvas;
-      let drawContext = drawCanvas.getContext('2d');
-      let clipCanvas = this.$refs.clipCanvas;
-      let clipContext = clipCanvas.getContext("2d");
+    fetchImageLoad(image, callback) {
+      let timer = setInterval(function () {
+        if (image.complete) {
+          callback(image)
+          clearInterval(timer)
+        }
+      }, 1000)
+    },
+    async onCanvasDrawHandler(comicPictureURL) {
+      let _this = this;
       let image = new Image();
-      image.src = new URL(`http://image.fm1100.com/${comicPictureURL}`).href;
-      image.onload = function () {
+      image.crossOrigin = "Anonymous";
+      image.src = new URL(`http://image.fm1100.com/bomtoon/20240101/chapter/60/1704074085298.jpg`).href;
+      // image.src = new URL(`http://image.fm1100.com/${comicPictureURL}`).href;
+      await this.fetchImageLoad(image, function () {
+
         let width = image.naturalWidth;
         let height = image.naturalHeight;
+
+        let drawCanvas = _this.$refs.drawCanvas;
         drawCanvas.width = width;
         drawCanvas.height = height;
-        drawContext.scale(1, 1);
-        drawContext.drawImage(this, 0, 0);
+        let clipContext = drawCanvas.getContext("2d");
+        clipContext.scale(1, 1);
+        clipContext.drawImage(image, 0, 0);
 
+        let clipCanvas = _this.$refs.clipCanvas;
         clipCanvas.width = width;
         clipCanvas.height = height;
-        clipContext.scale(1, 1);
-        // clipContext.drawImage(this, 0, 0);
-        //
-        // // 蒙版
-        clipContext.fillStyle = 'rgba(0,0,0,0.6)';
-        clipContext.strokeStyle = "green";
-        let start = null;
-        let clipArea = {};//裁剪范围
+        let drawContext = clipCanvas.getContext("2d");
+        drawContext.fillStyle = '#00000069';
+        let clipStart = null;
+        let clipArea = {};
+
         clipCanvas.onmousedown = function (e) {
-          start = {
+          clipStart = {
             x: e.offsetX,
             y: e.offsetY
           };
         }
         clipCanvas.onmousemove = function (e) {
-          if (start) {
-            fill(start.x, start.y, e.offsetX - start.x, e.offsetY - start.y)
+          if (clipStart) {
+            let x = clipStart.x;
+            let y = clipStart.y;
+            let w = e.offsetX - clipStart.x;
+            let h = e.offsetY - clipStart.y;
+            drawContext.clearRect(0, 0, width, height);
+            drawContext.beginPath();
+            //遮罩层
+            drawContext.globalCompositeOperation = "source-over";
+            drawContext.fillRect(0, 0, width, height);
+            //画框
+            drawContext.globalCompositeOperation = 'destination-out';
+            drawContext.fillRect(x, y, w, h);
+            //描边
+            drawContext.globalCompositeOperation = "source-over";
+            drawContext.moveTo(x, y);
+            drawContext.lineTo(x + w, y);
+            drawContext.lineTo(x + w, y + h);
+            drawContext.lineTo(x, y + h);
+            drawContext.lineTo(x, y);
+            drawContext.stroke();
+            drawContext.closePath();
+            clipArea = {
+              x,
+              y,
+              w,
+              h
+            };
           }
         }
-        document.addEventListener("mouseup", function () {
-          if (start) {
-            start = null;
-            let url = startClip(clipArea);
-            console.log(url);
+        clipCanvas.onmouseup = function (e) {
+          if (clipStart) {
+            if (Object.getOwnPropertyNames(clipArea).length === 0 && Object.getOwnPropertySymbols(clipArea).length === 0) {
+              _this.$message.warning('未选中区域');
+            } else {
+              clipStart = null;
+              let canvas = document.createElement("canvas");
+              canvas.width = clipArea.w;
+              canvas.height = clipArea.h;
+              let data = clipContext.getImageData(clipArea.x, clipArea.y, clipArea.w, clipArea.h);
+              let context = canvas.getContext("2d");
+              context.scale(1, 1);
+              context.putImageData(data, 0, 0);
+              let img = document.getElementById("img");
+              // img.src = canvas.toDataURL("image/png", 1.0);
+              img.src = canvas.toDataURL("image/jpeg", 1.0);
+
+              Tesseract.recognize(img.src, 'kor', {
+                // logger: m => console.log(m)
+              }).then(result => {
+                console.log(result)
+                debugger;
+                // xhr.post('http://fanyi.fm8899.cn/gmh2021.php/comic/translate', {
+                //   'form': 'kor',
+                //   'to': 'zh',
+                //   'q': result.data.text,
+                //   'callback': 'callback'
+                // }).then(res => {
+                //   console.log(res)
+                //   debugger;
+                // }).catch(e => {
+                //   console.error(e);
+                //   debugger;
+                // })
+                debugger;
+              }).catch(err => {
+                console.error(err);
+              })
+            }
           }
-        })
-
-        function fill(x, y, w, h) {
-          clipContext.clearRect(0, 0, width, height);
-          clipContext.beginPath();
-          //遮罩层
-          clipContext.globalCompositeOperation = "source-over";
-          clipContext.fillRect(0, 0, width, height);
-          //画框
-          clipContext.globalCompositeOperation = 'destination-out';
-          clipContext.fillRect(x, y, w, h);
-          //描边
-          clipContext.globalCompositeOperation = "source-over";
-          clipContext.moveTo(x, y);
-          clipContext.lineTo(x + w, y);
-          clipContext.lineTo(x + w, y + h);
-          clipContext.lineTo(x, y + h);
-          clipContext.lineTo(x, y);
-          clipContext.stroke();
-          clipContext.closePath();
-          clipArea = {
-            x,
-            y,
-            w,
-            h
-          };
         }
-
-        function startClip(area) {
-          let canvas = document.createElement("canvas");
-          canvas.width = area.w;
-          canvas.height = area.h;
-
-          let data = clipContext.getImageData(area.x, area.y, area.w, area.h);
-          let context = canvas.getContext("2d");
-          context.putImageData(data, 0, 0);
-          return canvas.toDataURL("image/png");
-        }
-      }
+      });
+    },
+    onTesseractHandler() {
+      // Tesseract.recognize(img.src, 'kor', {
+      //   // logger: m => console.log(m)
+      // }).then(result => {
+      //   return result;
+      // }).catch(err => {
+      //   console.error(err);
+      //   return {
+      //     'data': {
+      //       'text': ''
+      //     }
+      //   };
+      // })
     },
     async onInitializeCanvasLayoutHandler() {
-      if (!this.scroll.lock) {
-        this.scroll.lock = true;
-        let comicEditor = this.$refs.comicEditor;
-        this.scroll.width = comicEditor.scrollWidth - (8 * 2) + 'px';
-        this.scroll.height = comicEditor.scrollHeight - (8 * 2) + 'px';
-      }
       if (!window.queryLocalFonts) {
         this.$message.warning("你的浏览器不支持 queryLocalFonts API");
       } else {
@@ -422,12 +455,11 @@ export default {
       this.$store.commit('messengerStore/setDialogVisible', true);
       this.$store.commit('messengerStore/setDialogTitle', `漫画编辑：${editor.name}`);
       this.$store.commit('messengerStore/setDialogWidth', '96%');
-      this.$store.commit('messengerStore/setDialogFooter', false);
       this.$store.commit('messengerStore/setDialogFullScreen', true);
-      this.currentAction = 'editor';
-
-
-      this.comicChaptersOptions = editor.comicChapters;
+      if (editor.comicChapters) {
+        this.comicChaptersOptions = editor.comicChapters;
+        // this.onComicChaptersChangeHandler(this.comicChaptersOptions[0]);
+      }
     },
     onSearchQuery() {
       this.fetchPageable();
@@ -504,10 +536,22 @@ export default {
 
   .comic-chapters-layout {
     margin-bottom: 12px;
+
+    :deep(.el-select-dropdown__item.selected) {
+      display: flex;
+      justify-content: left;
+      align-items: center;
+    }
   }
 
   .comic-editor-layout {
+    #img {
+      transform: v-bind('scroll.canvas.scale');
+    }
+
     display: flex;
+    width: 100%;
+    height: calc(100% - 32px);
 
     .comic-carousel, .comic-editor, .comic-ribbon {
       padding: 8px;
@@ -538,13 +582,12 @@ export default {
       flex: 1 1 auto;
 
       .comic-editor-container {
-        width: v-bind('scroll.width');
-        //height: v-bind('scroll.height');
-        height: v-bind('scroll.canvas.autoHeightModel');
+        width: 100%;
+        height: 100%;
         overflow: auto;
         position: relative;
 
-        #drawCanvas, #clipCanvas {
+        #drawCanvas, #clipCanvas, #img {
           transform: v-bind('scroll.canvas.scale');
         }
 
@@ -567,5 +610,13 @@ export default {
     }
   }
 
+  :deep(.el-dialog__body) {
+    height: calc(100% - (60px + 54px));
+  }
+
+  :deep(.el-carousel), :deep(.el-carousel__container) {
+    width: 100%;
+    height: 100% !important;
+  }
 }
 </style>

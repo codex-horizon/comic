@@ -1,11 +1,11 @@
 <template>
   <el-dialog ref="dialog"
-      v-model="dialogVisible"
-      :fullscreen="Boolean(dialogFullscreen)"
-      v-bind:before-close=" () => this.$store.commit('messengerStore/setDialogVisible', false) "
-      v-bind:title="`${dialogTitle}`"
-      v-bind:width="`${dialogWidth}`"
-      draggable>
+             v-model="dialogVisible"
+             :fullscreen="Boolean(dialogFullscreen)"
+             v-bind:before-close=" () => this.$store.commit('messengerStore/setDialogVisible', false) "
+             v-bind:title="`${dialogTitle}`"
+             v-bind:width="`${dialogWidth}`"
+             draggable>
 
     <!--<template #header>
       <slot name="header"/>
@@ -19,14 +19,9 @@
       <slot name="footer"/>
     </template>-->
 
-    <template v-slot:footer v-if="dialogFooter">
-      <!--<slot name="footer"/>-->
-      <el-button plain v-on:click=" () => this.$store.commit('messengerStore/setDialogVisible', false) ">取&nbsp;消
-      </el-button>
-      <el-button type="primary" plain v-on:click=" () => this.$store.commit('messengerStore/setDialogVisible', false) ">
-        确&nbsp;认
-      </el-button>
-    </template>
+    <!--<template v-slot:footer>
+      <slot name="footer"/>
+    </template>-->
 
   </el-dialog>
 </template>
@@ -40,9 +35,6 @@ export default {
     },
     dialogTitle: function () {
       return this.$store.getters['messengerStore/getDialogTitle'];
-    },
-    dialogFooter: function () {
-      return this.$store.getters['messengerStore/getDialogFooter'];
     },
     dialogFullscreen: function () {
       return this.$store.getters['messengerStore/getDialogFullScreen'];
@@ -61,6 +53,6 @@ export default {
 </script>
 <style lang="scss">
 .el-dialog {
-  border-radius: 12px;
+  border-radius: 8px;
 }
 </style>
