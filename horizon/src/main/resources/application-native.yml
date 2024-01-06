@@ -14,3 +14,6 @@ spring:
     open-in-view: false
     hibernate:
       ddl-auto: update
+  web:
+    resources:
+      add-mappings: true

@@ -23,5 +23,13 @@ public class GroupValidator {
 
     }
 
+    public interface Ocr extends Default {
+
+    }
+
+    public interface Translate extends Default {
+
+    }
+
 }
 

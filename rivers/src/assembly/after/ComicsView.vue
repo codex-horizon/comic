@@ -131,7 +131,7 @@
                 </template>
                 <div>
                   <div>
-                    <el-input rows="2" type="textarea" placeholder="原文"/>
+                    <el-input v-model="beforePhrases" rows="2" type="textarea" placeholder="原文"/>
                   </div>
                   <div style="display: flex; justify-content: space-between; align-items: center; margin: 12px 0 6px;">
                     <el-switch
@@ -152,7 +152,7 @@
                     </el-select>
                   </div>
                   <div>
-                    <el-input rows="2" type="textarea" placeholder="译文"/>
+                    <el-input v-model="afterPhrases" rows="2" type="textarea" placeholder="译文"/>
                   </div>
                   <div style="display: flex; justify-content: space-between; align-items: center; margin: 6px 0 12px;">
                     <el-tooltip
@@ -213,9 +213,10 @@
   </div>
 </template>
 <script>
-import {comicApi} from '@/api/index.js';
-import {getCookie, xhr} from "@/utils";
+import {comicApi, ocrApi, translateApi} from '@/api/index.js';
+import {getCookie} from "@/utils";
 import Tesseract from 'tesseract.js';
+import rgbaster from 'rgbaster';
 
 export default {
   name: 'ComicsView',
@@ -253,6 +254,8 @@ export default {
         {'id': 1, name: '韩文'},
         {'id': 2, name: '英文'},
       ],
+      beforePhrases: '',
+      afterPhrases: '',
 
       originalLanguage: 1,
       translationLanguage: 0,
@@ -301,7 +304,7 @@ export default {
       this.scroll.canvas.scale = `scale(${val},${val})`;
       return val;
     },
-    fetchImageLoad(image, callback) {
+    async fetchImageLoad(image, callback) {
       let timer = setInterval(function () {
         if (image.complete) {
           callback(image)
@@ -309,13 +312,13 @@ export default {
         }
       }, 1000)
     },
-    async onCanvasDrawHandler(comicPictureURL) {
+    onCanvasDrawHandler(comicPictureURL) {
       let _this = this;
       let image = new Image();
       image.crossOrigin = "Anonymous";
-      image.src = new URL(`http://image.fm1100.com/bomtoon/20240101/chapter/60/1704074085298.jpg`).href;
-      // image.src = new URL(`http://image.fm1100.com/${comicPictureURL}`).href;
-      await this.fetchImageLoad(image, function () {
+      // image.src = new URL(`http://image.fm1100.com/bomtoon/20240101/chapter/60/1704074081894.jpg`).href;
+      image.src = new URL(`http://image.fm1100.com/${comicPictureURL}`).href;
+      this.fetchImageLoad(image, function () {
 
         let width = image.naturalWidth;
         let height = image.naturalHeight;
@@ -335,13 +338,76 @@ export default {
         let clipStart = null;
         let clipArea = {};
 
-        clipCanvas.onmousedown = function (e) {
+
+
+        let onmousedown2 = function (event) {
+          if (event.button === 0) { // 左键单击
+            let mouseX = event.clientX - clipCanvas.offsetLeft; // 获取鼠标相对于Canvas的x坐标
+            let mouseY = event.clientY - clipCanvas.offsetTop; // 获取鼠标相对于Canvas的y坐标
+            // if (mouseX > drawTextAction.x && mouseX < drawTextAction.x + drawContext.measureText(drawTextAction.text).width && mouseY > drawTextAction.y - 30 && mouseY < drawTextAction.y) { // 如果鼠标在文本上
+              drawTextAction.startDragging(mouseX, mouseY);
+            // }
+          }
+        };
+        let onmousemove2 = function (event) {
+          if (drawTextAction.isDragging) {
+            let mouseX = event.clientX - clipCanvas.offsetLeft;
+            let mouseY = event.clientY - clipCanvas.offsetTop;
+            drawTextAction.drag(mouseX, mouseY);
+            drawContext.clearRect(0, 0, clipCanvas.width, clipCanvas.height); // 清除当前Canvas
+            drawTextAction.draw(); // 重新绘制文本对象
+          }
+        }
+        let onmouseup2 = function (event) {
+          drawTextAction.stopDragging();
+        }
+
+        let drawTextAction = {
+          x: 50,
+          y: 50,
+          text: "Drag me!",
+          color: "black",
+          isDragging: false,
+          dragStartX: 0,
+          dragStartY: 0,
+          drawContext:null,
+          // 绘制文本
+          draw: function (drawContext) {
+            if(drawContext){
+              this.drawContext = drawContext;
+            }
+            this.drawContext.fillStyle = this.color;
+            this.drawContext.font = "30px Arial";
+            this.drawContext.fillText(this.text, this.x, this.y);
+          },
+          // 开始拖动
+          startDragging: function (x, y) {
+            this.isDragging = true;
+            this.dragStartX = x;
+            this.dragStartY = y;
+          },
+          // 停止拖动
+          stopDragging: function () {
+            this.isDragging = false;
+          },
+          // 拖动文本
+          drag: function (x, y) {
+            let deltaX = x - this.dragStartX;
+            let deltaY = y - this.dragStartY;
+            this.x += deltaX;
+            this.y += deltaY;
+            this.dragStartX = x;
+            this.dragStartY = y;
+          }
+        };
+
+        let onmousedown1 = function (e) {
           clipStart = {
             x: e.offsetX,
             y: e.offsetY
           };
-        }
-        clipCanvas.onmousemove = function (e) {
+        };
+        let onmousemove1 = function (e) {
           if (clipStart) {
             let x = clipStart.x;
             let y = clipStart.y;
@@ -362,8 +428,8 @@ export default {
             drawContext.lineTo(x + w, y + h);
             drawContext.lineTo(x, y + h);
             drawContext.lineTo(x, y);
-            drawContext.stroke();
             drawContext.closePath();
+            drawContext.stroke();
             clipArea = {
               x,
               y,
@@ -371,8 +437,8 @@ export default {
               h
             };
           }
-        }
-        clipCanvas.onmouseup = function (e) {
+        };
+        let onmouseup1 = function (e) {
           if (clipStart) {
             if (Object.getOwnPropertyNames(clipArea).length === 0 && Object.getOwnPropertySymbols(clipArea).length === 0) {
               _this.$message.warning('未选中区域');
@@ -386,48 +452,74 @@ export default {
               context.scale(1, 1);
               context.putImageData(data, 0, 0);
               let img = document.getElementById("img");
-              // img.src = canvas.toDataURL("image/png", 1.0);
-              img.src = canvas.toDataURL("image/jpeg", 1.0);
+              img.style.display = "none";
+              let base64Image = canvas.toDataURL("image/png", 1.0);
+              img.src = base64Image;
+              if (_this.activeOCR) {
+                // 开启服务OCR
+                _this.fetchOcrText(base64Image);
+              } else {
+                // 开启本地OCR
+                Tesseract.recognize(base64Image, 'kor', {
+                  // logger: m => console.log(m)
+                }).then(async result => {
+                  _this.fetchTranslateText(result.data.text);
+                  drawContext.clearRect(0, 0, width, height); // 清空画布
+                  let rgbAster = await _this.fetchRgbAster(base64Image);
+                  debugger;
+                  clipContext.fillStyle = rgbAster[0]['color'];    //填充颜色
+                  clipContext.fillRect(clipArea.x, clipArea.y, clipArea.w, clipArea.h); //透明无填充；x，y，width,height
+                  clipContext.stroke();//相当于完成提交
 
-              Tesseract.recognize(img.src, 'kor', {
-                // logger: m => console.log(m)
-              }).then(result => {
-                console.log(result)
-                debugger;
-                // xhr.post('http://fanyi.fm8899.cn/gmh2021.php/comic/translate', {
-                //   'form': 'kor',
-                //   'to': 'zh',
-                //   'q': result.data.text,
-                //   'callback': 'callback'
-                // }).then(res => {
-                //   console.log(res)
-                //   debugger;
-                // }).catch(e => {
-                //   console.error(e);
-                //   debugger;
-                // })
-                debugger;
-              }).catch(err => {
-                console.error(err);
-              })
+                  eventReversal(clipCanvas, drawContext,drawTextAction, onmousedown2, onmousemove2,onmouseup2);
+                }).catch(err => {
+                  console.error(err);
+                })
+              }
             }
           }
+        };
+
+        clipCanvas.onmousedown = onmousedown1;
+        clipCanvas.onmousemove = onmousemove1;
+        clipCanvas.onmouseup = onmouseup1;
+
+        function eventReversal(clipCanvas, drawContext, drawTextAction, onmousedown2, onmousemove2,onmouseup2 ){
+          debugger;
+          // 创建文本对象
+          // // 绘制文本对象
+          drawTextAction.draw(drawContext);
+          clipCanvas.onmousedown = onmousedown2;
+          clipCanvas.onmousemove = onmousemove2;
+          clipCanvas.onmouseup = onmouseup2;
         }
+
+
+
+      })
+    },
+    fetchOcrText(base64Image) {
+      ocrApi.fetchOcrText({'image': base64Image}).then(res => {
+        console.log(res);
+        let result = JSON.parse(res.data.result)['trans_result'];
+        this.beforePhrases = result[0].src;
+        this.afterPhrases = result[0].dst;
+      }).catch(error => {
+        console.log(error);
       });
     },
-    onTesseractHandler() {
-      // Tesseract.recognize(img.src, 'kor', {
-      //   // logger: m => console.log(m)
-      // }).then(result => {
-      //   return result;
-      // }).catch(err => {
-      //   console.error(err);
-      //   return {
-      //     'data': {
-      //       'text': ''
-      //     }
-      //   };
-      // })
+    fetchTranslateText(text) {
+      translateApi.fetchTranslateText({'text': text}).then(res => {
+        console.log(res);
+        let result = JSON.parse(res.data.result)['trans_result'];
+        this.beforePhrases = result[0].src;
+        this.afterPhrases = result[0].dst;
+      }).catch(error => {
+        console.log(error);
+      });
+    },
+    async fetchRgbAster(base64Image) {
+      return await rgbaster(base64Image, {scale: 1.0});
     },
     async onInitializeCanvasLayoutHandler() {
       if (!window.queryLocalFonts) {

@@ -30,4 +30,22 @@ public class CommonConfigurer implements Serializable {
     @Value("${request-white.ignored-uris}")
     private String[] requestWhiteIgnoredUris;
 
+    @Value("${alibaba.ocr.accessKey}")
+    private String alibabaOcrAccessKey;
+
+    @Value("${alibaba.ocr.accessSecret}")
+    private String alibabaOcrAccessSecret;
+
+    @Value(("${alibaba.ocr.endpoint}"))
+    private String alibabaOcrEndpoint;
+
+    @Value("${baidu.translate.accessKey}")
+    private String baiduTranslateAccessKey;
+
+    @Value("${baidu.translate.accessSecret}")
+    private String baiduTranslateAccessSecret;
+
+    @Value("${fileSystemPath.mapping.resourceLocations}")
+    private String[] fileSystemPathMappingResourceLocations;
+
 }

@@ -10,6 +10,7 @@ import {
     RoleView,
     MenuView
 } from './modules/router.js';
+import {getCookie, getSession} from "@/utils";
 
 const router = createRouter({
     strict: true,
@@ -41,28 +42,28 @@ const router = createRouter({
                     path: '/home.html',
                     name: HomeView.name,
                     component: HomeView
-                },{
+                }, {
                     meta: {
                         title: '漫画列表'
                     },
                     path: '/comics.html',
                     name: ComicsView.name,
                     component: ComicsView
-                },{
+                }, {
                     meta: {
                         title: '账号管理'
                     },
                     path: '/account.html',
                     name: AccountView.name,
                     component: AccountView
-                },{
+                }, {
                     meta: {
                         title: '角色管理'
                     },
                     path: '/role.html',
                     name: RoleView.name,
                     component: RoleView
-                },{
+                }, {
                     meta: {
                         title: '菜单管理'
                     },
@@ -80,7 +81,12 @@ const router = createRouter({
  * Router.beforeEach 每次发生路由的导航跳转时，都会触发全局前置守卫，因此，在全局前置守卫中，程序员可以对每个路由进行访问权限的控制
  */
 router.beforeEach(async (to, from, next) => {
-    console.log('全局前置守卫', to, from, next());
+    if ((getCookie('UUID') && getSession(getCookie('UUID'))) || to.path === '/login.html') {
+        next()
+    } else {
+        next('/login.html');
+    }
+    console.log('全局前置守卫', to, from/*, next()*/);
 });
 
 /**
