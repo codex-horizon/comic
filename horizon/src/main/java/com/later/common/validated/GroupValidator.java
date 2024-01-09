@@ -31,5 +31,9 @@ public class GroupValidator {
 
     }
 
+    public interface Oss extends Default {
+
+    }
+
 }
 

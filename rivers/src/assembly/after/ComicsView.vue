@@ -113,7 +113,7 @@
                     <el-icon>
                       <Picture/>
                     </el-icon>
-                    <span style="margin-left: 6px;">图片自定义缩放</span></el-tag>
+                    <span style="margin-left: 6px;">图片定义缩放</span></el-tag>
                 </template>
                 <div>
                   <el-slider v-model="scroll.canvas.sliderModel" :format-tooltip="onSliderFormatHandler" show-input
@@ -133,7 +133,10 @@
                   <div>
                     <el-input v-model="beforePhrases" rows="2" type="textarea" placeholder="原文"/>
                   </div>
-                  <div style="display: flex; justify-content: space-between; align-items: center; margin: 12px 0 6px;">
+                  <div>
+                    <el-button icon="Printer" circle/>
+                  </div>
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin: 4px 0;">
                     <el-switch
                         v-model="activeOCR"
                         inline-prompt
@@ -152,56 +155,45 @@
                     </el-select>
                   </div>
                   <div>
-                    <el-input v-model="afterPhrases" rows="2" type="textarea" placeholder="译文"/>
-                  </div>
-                  <div style="display: flex; justify-content: space-between; align-items: center; margin: 6px 0 12px;">
-                    <el-tooltip
-                        effect="dark"
-                        content="译文字体颜色"
-                        placement="top-start"
-                    >
-                      <el-color-picker v-model="characterColor" show-alpha :predefine="predefineColors"/>
-                    </el-tooltip>
-                    <el-tooltip
-                        effect="dark"
-                        content="译文背景颜色"
-                        placement="top-start"
-                    >
-                      <el-color-picker v-model="backgroundColor" show-alpha :predefine="predefineColors"
-                                       @focus="onBackgroundColorHandler"/>
-                    </el-tooltip>
-                    <el-tooltip
-                        effect="dark"
-                        content="译文字体选项"
-                        placement="top"
-                    >
-                      <el-select v-model="translatedFontModel" placeholder="选择译文字体" size="small" filterable>
-                        <el-option
-                            v-for="({family, fullName}, index) in availableFonts" :key="index" :label="fullName"
-                            :value="family"/>
-                      </el-select>
-                    </el-tooltip>
-                    <el-tooltip
-                        effect="dark"
-                        content="译文字体大小"
-                        placement="top"
-                    >
-                      <el-input-number v-model="translatedFontSizeModel" size="small" :min="9" :max="36"
-                                       controls-position="right"/>
-                    </el-tooltip>
+                    <el-input class="after-phrases" v-model="afterPhrases" rows="2" type="textarea" placeholder="译文"/>
                   </div>
                 </div>
-              </el-collapse-item>
-              <el-collapse-item name="3">
-                <template #title>
-                  <el-tag type="success">
-                    <el-icon>
-                      <FolderOpened/>
-                    </el-icon>
-                    <span style="margin-left: 6px;">图片存储操作</span></el-tag>
-                </template>
+
+                <div style="display:flex; justify-content: left; align-items: center; padding: 4px 0;">
+                  <span>字体选项：</span>
+                  <el-select v-model="translatedFontModel" placeholder="选择字体" @change="onTranslatedFontHandler"
+                             size="small" filterable>
+                    <el-option
+                        v-for="({family, fullName}, index) in availableFonts" :key="index" :label="fullName"
+                        :value="family"/>
+                  </el-select>
+                </div>
+                <div style="display:flex; justify-content: left; align-items: center; padding: 4px 0;">
+                  <span>字体大小：</span>
+                  <el-input-number v-model="translatedFontSizeModel" size="small" :min="9" :max="70"
+                                   @change="onTranslatedFontSizeHandler"
+                                   controls-position="right"/>
+                </div>
+                <div style="display:flex; justify-content: left; align-items: center; padding: 4px 0;">
+                  <span>字体颜色：</span>
+                  <el-color-picker v-model="characterColor" size="small" show-alpha :predefine="predefineColors"
+                                   @focus="onCharacterColorHandler" @change="onCharacterColorChangeHandler"/>
+                </div>
+
                 <div>
-                  <img src="" ref="img" id="img">
+                  <div>
+                    <el-switch
+                        v-model="drag"
+                        inline-prompt
+                        style="--el-switch-on-color: #13ce66; --el-switch-off-color: #ff4949"
+                        active-text="拖拽开启"
+                        inactive-text="拖拽关闭"
+                    />
+                  </div>
+                  <div>
+                    <img src="" ref="img" id="img">
+                    <el-button icon="Check" circle/>
+                  </div>
                 </div>
               </el-collapse-item>
             </el-collapse>
@@ -243,7 +235,10 @@ export default {
       scroll: {
         canvas: {
           sliderModel: 100,
-          scale: 'scale(1)'
+          scale: 'scale(1)',
+          fontFamily: 'Microsoft YaHei',
+          fontSize: '12px',
+          color: ''
         }
       },
 
@@ -256,6 +251,8 @@ export default {
       ],
       beforePhrases: '',
       afterPhrases: '',
+
+      drag: false,
 
       originalLanguage: 1,
       translationLanguage: 0,
@@ -277,27 +274,29 @@ export default {
         '#c7158577',
       ],
       characterColor: 'rgba(0, 0, 0, 1)',
-      backgroundColor: '',
       availableFonts: [],
       translatedFontModel: '',
-      translatedFontSizeModel: 12
+      translatedFontSizeModel: 12,
+
+
+      clipCanvas: null,
+      drawContext: null,
+      drawTextAction: null,
+      onmousedown2: null,
+      onmousemove2: null,
+      onmouseup2: null,
+      clipArea: null
+    }
+  },
+  watch: {
+    'drag'(item1, item2) {
+      if (item1) {
+        this.drawTextAction.draw(this.drawContext, this.afterPhrases, this.scroll.canvas.color, this.scroll.canvas.fontSize, this.scroll.canvas.fontFamily, this.clipArea)
+        this.eventReversal(this.clipCanvas, this.drawContext, this.drawTextAction, this.onmousedown2, this.onmousemove2, this.onmouseup2);
+      }
     }
   },
   methods: {
-    async onBackgroundColorHandler() {
-      if (!window.EyeDropper) {
-        this.$message.warning("你的浏览器不支持 EyeDropper API");
-      } else {
-        const eyeDropper = new window.EyeDropper() // 初始化一个EyeDropper对象
-        this.$message.info("按Esc可退出");
-        try {
-          const result = await eyeDropper.open(); // 开始拾取颜色
-          this.backgroundColor = result.sRGBHex;
-        } catch (e) {
-          this.$message.success("用户取消了取色");
-        }
-      }
-    },
     onSliderFormatHandler(number) {
       this.scroll.canvas.sliderModel = number;
       const val = number / 100;
@@ -339,13 +338,12 @@ export default {
         let clipArea = {};
 
 
-
         let onmousedown2 = function (event) {
           if (event.button === 0) { // 左键单击
             let mouseX = event.clientX - clipCanvas.offsetLeft; // 获取鼠标相对于Canvas的x坐标
             let mouseY = event.clientY - clipCanvas.offsetTop; // 获取鼠标相对于Canvas的y坐标
             // if (mouseX > drawTextAction.x && mouseX < drawTextAction.x + drawContext.measureText(drawTextAction.text).width && mouseY > drawTextAction.y - 30 && mouseY < drawTextAction.y) { // 如果鼠标在文本上
-              drawTextAction.startDragging(mouseX, mouseY);
+            drawTextAction.startDragging(mouseX, mouseY);
             // }
           }
         };
@@ -367,18 +365,46 @@ export default {
           y: 50,
           text: "Drag me!",
           color: "black",
+          fontSize: '',
+          fontFamily: '',
           isDragging: false,
           dragStartX: 0,
           dragStartY: 0,
-          drawContext:null,
+          drawContext: null,
+          clipArea: null,
           // 绘制文本
-          draw: function (drawContext) {
-            if(drawContext){
+          draw: function (drawContext, afterPhrases, color, fontSize, fontFamily, clipArea) {
+            if (drawContext) {
               this.drawContext = drawContext;
             }
+            if (afterPhrases) {
+              this.text = afterPhrases;
+            }
+            if (color) {
+              this.color = color;
+            }
+            if (fontSize) {
+              this.fontSize = fontSize;
+            }
+            if (fontFamily) {
+              this.fontFamily = fontFamily;
+            }
+            if (clipArea) {
+              this.clipArea = clipArea;
+              this.x = clipArea.x;
+              this.y = clipArea.y;
+            }else{
+              this.clipArea = null;
+            }
+            debugger;
             this.drawContext.fillStyle = this.color;
-            this.drawContext.font = "30px Arial";
-            this.drawContext.fillText(this.text, this.x, this.y);
+            this.drawContext.font = `${this.fontSize} ${this.fontFamily}`;
+            if(this.clipArea) {
+              this.drawContext.fillText(this.text, this.clipArea.x, this.clipArea.y);
+            }else{
+              this.drawContext.fillText(this.text, this.x, this.y);
+            }
+
           },
           // 开始拖动
           startDragging: function (x, y) {
@@ -436,45 +462,59 @@ export default {
               w,
               h
             };
+            _this.clipArea = clipArea;
           }
         };
-        let onmouseup1 = function (e) {
-          if (clipStart) {
-            if (Object.getOwnPropertyNames(clipArea).length === 0 && Object.getOwnPropertySymbols(clipArea).length === 0) {
-              _this.$message.warning('未选中区域');
-            } else {
-              clipStart = null;
-              let canvas = document.createElement("canvas");
-              canvas.width = clipArea.w;
-              canvas.height = clipArea.h;
-              let data = clipContext.getImageData(clipArea.x, clipArea.y, clipArea.w, clipArea.h);
-              let context = canvas.getContext("2d");
-              context.scale(1, 1);
-              context.putImageData(data, 0, 0);
-              let img = document.getElementById("img");
-              img.style.display = "none";
-              let base64Image = canvas.toDataURL("image/png", 1.0);
-              img.src = base64Image;
-              if (_this.activeOCR) {
-                // 开启服务OCR
-                _this.fetchOcrText(base64Image);
+        let onmouseup1 = async function (e) {
+          if (_this.drag) {
+            drawTextAction.draw(drawContext)
+            eventReversal(clipCanvas, drawContext, drawTextAction, onmousedown2, onmousemove2, onmouseup2);
+          } else {
+            if (clipStart) {
+              if (Object.getOwnPropertyNames(clipArea).length === 0 && Object.getOwnPropertySymbols(clipArea).length === 0) {
+                _this.$message.warning('未选中区域');
               } else {
-                // 开启本地OCR
-                Tesseract.recognize(base64Image, 'kor', {
-                  // logger: m => console.log(m)
-                }).then(async result => {
-                  _this.fetchTranslateText(result.data.text);
+                clipStart = null;
+                let canvas = document.createElement("canvas");
+                canvas.width = clipArea.w;
+                canvas.height = clipArea.h;
+                let data = clipContext.getImageData(clipArea.x, clipArea.y, clipArea.w, clipArea.h);
+                let context = canvas.getContext("2d");
+                context.scale(1, 1);
+                context.putImageData(data, 0, 0);
+                let img = document.getElementById("img");
+                img.style.display = "none";
+                let base64Image = canvas.toDataURL("image/png", 1.0);
+                img.src = base64Image;
+                if (_this.activeOCR) {
+                  // 开启服务OCR
+                  _this.fetchOcrText(base64Image);
                   drawContext.clearRect(0, 0, width, height); // 清空画布
                   let rgbAster = await _this.fetchRgbAster(base64Image);
-                  debugger;
                   clipContext.fillStyle = rgbAster[0]['color'];    //填充颜色
                   clipContext.fillRect(clipArea.x, clipArea.y, clipArea.w, clipArea.h); //透明无填充；x，y，width,height
                   clipContext.stroke();//相当于完成提交
-
-                  eventReversal(clipCanvas, drawContext,drawTextAction, onmousedown2, onmousemove2,onmouseup2);
-                }).catch(err => {
-                  console.error(err);
-                })
+                } else {
+                  // 开启本地OCR
+                  Tesseract.recognize(base64Image, 'kor', {
+                    // logger: m => console.log(m)
+                  }).then(async result => {
+                    _this.fetchTranslateText(result.data.text);
+                    drawContext.clearRect(0, 0, width, height); // 清空画布
+                    let rgbAster = await _this.fetchRgbAster(base64Image);
+                    clipContext.fillStyle = rgbAster[0]['color'];    //填充颜色
+                    clipContext.fillRect(clipArea.x, clipArea.y, clipArea.w, clipArea.h); //透明无填充；x，y，width,height
+                    clipContext.stroke();//相当于完成提交
+                  }).catch(err => {
+                    console.error(err);
+                  })
+                }
+                _this.clipCanvas = clipCanvas;
+                _this.drawContext = drawContext;
+                _this.drawTextAction = drawTextAction;
+                _this.onmousedown2 = onmousedown2;
+                _this.onmousemove2 = onmousemove2;
+                _this.onmouseup2 = onmouseup2;
               }
             }
           }
@@ -484,19 +524,19 @@ export default {
         clipCanvas.onmousemove = onmousemove1;
         clipCanvas.onmouseup = onmouseup1;
 
-        function eventReversal(clipCanvas, drawContext, drawTextAction, onmousedown2, onmousemove2,onmouseup2 ){
-          debugger;
-          // 创建文本对象
-          // // 绘制文本对象
-          drawTextAction.draw(drawContext);
+        function eventReversal(clipCanvas, drawContext, drawTextAction, onmousedown2, onmousemove2, onmouseup2) {
           clipCanvas.onmousedown = onmousedown2;
           clipCanvas.onmousemove = onmousemove2;
           clipCanvas.onmouseup = onmouseup2;
         }
 
-
-
       })
+    },
+    eventReversal(clipCanvas, drawContext, drawTextAction, onmousedown2, onmousemove2, onmouseup2) {
+      debugger;
+      this.clipCanvas.onmousedown = onmousedown2;
+      this.clipCanvas.onmousemove = onmousemove2;
+      this.clipCanvas.onmouseup = onmouseup2;
     },
     fetchOcrText(base64Image) {
       ocrApi.fetchOcrText({'image': base64Image}).then(res => {
@@ -521,15 +561,32 @@ export default {
     async fetchRgbAster(base64Image) {
       return await rgbaster(base64Image, {scale: 1.0});
     },
+    async onCharacterColorHandler() {
+      if (!window.EyeDropper) {
+        this.$message.warning("你的浏览器不支持 EyeDropper API");
+      } else {
+        const eyeDropper = new window.EyeDropper() // 初始化一个EyeDropper对象
+        this.$message.info("按Esc可退出");
+        try {
+          const result = await eyeDropper.open(); // 开始拾取颜色
+          debugger;
+          this.scroll.canvas.color = result.sRGBHex;
+          this.characterColor = result.sRGBHex;
+        } catch (e) {
+          this.$message.success("用户取消了取色");
+        }
+      }
+    },
     async onInitializeCanvasLayoutHandler() {
       if (!window.queryLocalFonts) {
         this.$message.warning("你的浏览器不支持 queryLocalFonts API");
       } else {
         const availableLocalFonts = await window.queryLocalFonts();
-        this.availableFonts = availableLocalFonts.map(fontData => ({
-          family: fontData.family,
-          fullName: fontData.fullName,
-        }));
+        let has = {};
+        this.availableFonts = availableLocalFonts.reduce(function (arr, item) {
+          !has[item.family] && (has[item.family] = arr.push(item));
+          return arr;
+        }, []);
       }
     },
     onCarouselChangeHandler(index) {
@@ -541,6 +598,16 @@ export default {
       this.onInitializeCanvasLayoutHandler();
       this.comicPictures = comicChapter.comicPictures;
       this.onCanvasDrawHandler(this.comicPictures[0].url);
+    },
+    onTranslatedFontHandler(val) {
+      this.scroll.canvas.fontFamily = val;
+    },
+    onTranslatedFontSizeHandler(val) {
+      this.scroll.canvas.fontSize = `${val}px`;
+    },
+    onCharacterColorChangeHandler(val) {
+      this.scroll.canvas.color = val;
+      this.characterColor = val;
     },
     onPreEditorHandler(editor) {
       this.$store.commit('messengerStore/setDialogCurrentView', this.$options.name);
@@ -699,6 +766,12 @@ export default {
     .comic-ribbon {
       flex: 0 0 390px;
       background-color: transparent;
+
+      :deep(.after-phrases > textarea) {
+        font-family: v-bind('scroll.canvas.fontFamily');
+        font-size: v-bind('scroll.canvas.fontSize');
+        color: v-bind('scroll.canvas.color');
+      }
     }
   }
 

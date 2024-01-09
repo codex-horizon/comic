@@ -12,6 +12,7 @@ import com.later.work.service.ITranslateService;
 import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import java.util.Base64;
 import java.util.Map;
 
@@ -31,7 +32,7 @@ public class OcrService implements IOcrService {
     @Override
     public Map<String, String> fetchOcrText(String imageBase64) {
         try {
-            ByteArrayInputStream streamBody = new ByteArrayInputStream(
+            InputStream streamBody = new ByteArrayInputStream(
                     Base64.getDecoder().decode(
                             imageBase64.replace("data:image/png;base64,", "")
                     )
