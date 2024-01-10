@@ -7,8 +7,6 @@ import com.later.work.service.IOcrService;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Map;
-
 /**
  * 小语种： https://next.api.aliyun.com/api/ocr-api/2021-07-07/RecognizeKorean?sdkStyle=dara&tab=DEMO&lang=JAVA
  */
@@ -23,7 +21,7 @@ public class OcrController {
     }
 
     @RequestMapping(name = "获取ocr文本", path = "/fetchOcrText", method = RequestMethod.POST)
-    IResult<Map<String, String>> fetchOcrText(@RequestBody @Validated(GroupValidator.Ocr.class) OcrDto ocrDto) {
+    IResult<String> fetchOcrText(@RequestBody @Validated(GroupValidator.Ocr.class) OcrDto ocrDto) {
         return IResult.Result.succeeded(iOcrService.fetchOcrText(ocrDto.getImage()));
     }
 

@@ -30,7 +30,7 @@ export default {
         },
         {
           name: '漫画列表',
-          route: '/comics.html',
+          route: '/comicList.html',
           icon: 'Operation'
         },
         {

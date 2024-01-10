@@ -6,6 +6,7 @@ import {
     IndexView,
     HomeView,
     ComicsView,
+    ComicListView,
     AccountView,
     RoleView,
     MenuView
@@ -42,6 +43,13 @@ const router = createRouter({
                     path: '/home.html',
                     name: HomeView.name,
                     component: HomeView
+                }, {
+                    meta: {
+                        title: '漫画列表'
+                    },
+                    path: '/comicList.html',
+                    name: ComicListView.name,
+                    component: ComicListView
                 }, {
                     meta: {
                         title: '漫画列表'

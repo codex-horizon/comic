@@ -3,6 +3,7 @@
              v-model="dialogVisible"
              :fullscreen="Boolean(dialogFullscreen)"
              v-bind:before-close=" () => this.$store.commit('messengerStore/setDialogVisible', false) "
+             v-bind:destroy-on-close="true"
              v-bind:title="`${dialogTitle}`"
              v-bind:width="`${dialogWidth}`"
              draggable>

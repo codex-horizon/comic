@@ -8,10 +8,11 @@ export default {
         },
         dialog: { // 后续改造Object.assign()
             currentView: '',
+            currentData: null,
             visible: false,
             title: '对话框',
             width: '36%',
-            fullScreen:false
+            fullScreen: false
         },
         table: {
             data: [
@@ -54,6 +55,9 @@ export default {
         getDialogCurrentView: state => {
             return state.dialog.currentView;
         },
+        getDialogCurrentData: state => {
+            return state.dialog.currentData;
+        },
         getDialogVisible: state => {
             return state.dialog.visible;
         },
@@ -94,6 +98,9 @@ export default {
     mutations: {
         setDialogCurrentView(state, currentView) {
             state.dialog.currentView = currentView;
+        },
+        setDialogCurrentData(state, currentData) {
+            state.dialog.currentData = currentData;
         },
         setDialogVisible(state, visible) {
             state.dialog.visible = visible;

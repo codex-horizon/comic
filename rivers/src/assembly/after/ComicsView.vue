@@ -116,8 +116,10 @@
                     <span style="margin-left: 6px;">图片定义缩放</span></el-tag>
                 </template>
                 <div>
-                  <el-slider v-model="scroll.canvas.sliderModel" :format-tooltip="onSliderFormatHandler" show-input
-                             size="small"/>
+                  <el-slider
+                      v-model="scroll.canvas.sliderModel"
+                      :format-tooltip="onSliderFormatHandler"
+                      show-input size="small"/>
                 </div>
               </el-collapse-item>
               <el-collapse-item name="2">
@@ -340,8 +342,8 @@ export default {
 
         let onmousedown2 = function (event) {
           if (event.button === 0) { // 左键单击
-            let mouseX = event.clientX - clipCanvas.offsetLeft; // 获取鼠标相对于Canvas的x坐标
-            let mouseY = event.clientY - clipCanvas.offsetTop; // 获取鼠标相对于Canvas的y坐标
+            let mouseX = event.offsetX - clipCanvas.offsetLeft; // 获取鼠标相对于Canvas的x坐标
+            let mouseY = event.offsetY - clipCanvas.offsetTop; // 获取鼠标相对于Canvas的y坐标
             // if (mouseX > drawTextAction.x && mouseX < drawTextAction.x + drawContext.measureText(drawTextAction.text).width && mouseY > drawTextAction.y - 30 && mouseY < drawTextAction.y) { // 如果鼠标在文本上
             drawTextAction.startDragging(mouseX, mouseY);
             // }
@@ -349,8 +351,8 @@ export default {
         };
         let onmousemove2 = function (event) {
           if (drawTextAction.isDragging) {
-            let mouseX = event.clientX - clipCanvas.offsetLeft;
-            let mouseY = event.clientY - clipCanvas.offsetTop;
+            let mouseX = event.offsetX - clipCanvas.offsetLeft; // 获取鼠标相对于Canvas的x坐标
+            let mouseY = event.offsetY - clipCanvas.offsetTop; // 获取鼠标相对于Canvas的y坐标
             drawTextAction.drag(mouseX, mouseY);
             drawContext.clearRect(0, 0, clipCanvas.width, clipCanvas.height); // 清除当前Canvas
             drawTextAction.draw(); // 重新绘制文本对象
@@ -396,7 +398,6 @@ export default {
             }else{
               this.clipArea = null;
             }
-            debugger;
             this.drawContext.fillStyle = this.color;
             this.drawContext.font = `${this.fontSize} ${this.fontFamily}`;
             if(this.clipArea) {
@@ -533,7 +534,6 @@ export default {
       })
     },
     eventReversal(clipCanvas, drawContext, drawTextAction, onmousedown2, onmousemove2, onmouseup2) {
-      debugger;
       this.clipCanvas.onmousedown = onmousedown2;
       this.clipCanvas.onmousemove = onmousemove2;
       this.clipCanvas.onmouseup = onmouseup2;
@@ -569,7 +569,6 @@ export default {
         this.$message.info("按Esc可退出");
         try {
           const result = await eyeDropper.open(); // 开始拾取颜色
-          debugger;
           this.scroll.canvas.color = result.sRGBHex;
           this.characterColor = result.sRGBHex;
         } catch (e) {
