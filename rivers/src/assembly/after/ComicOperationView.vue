@@ -88,33 +88,20 @@
                   <div class="flex-space">
                     <div>
                       <el-switch v-model="hasScreenshot" inline-prompt
-                                 active-text="截图开启" inactive-text="截图关闭"
-                                 @change="(bool) => {
-                                  if(this.identifyTextBefore) {
-                                    this.hasDrag = !bool;
-                                  }
-                                 }"/>
+                                 active-text="截图开启" inactive-text="截图关闭"/>
                     </div>
                     <div>
                       <el-switch
                           v-model="hasDrag" inline-prompt
                           active-text="移动开启"
                           inactive-text="移动关闭"
-                          @change="(bool) => {
-                            if(!this.identifyTextBefore) {
-                              this.hasDrag = !bool;
-                              this.$message.warning('内容空无法移动！');
-                            } else {
-                              this.hasScreenshot = false;
-                            }
-                      }"
                       />
                     </div>
                   </div>
                   <div class="flex-space">
                     <el-input v-model="identifyTextBefore" rows="2" type="textarea" placeholder="原文" @input="async (value) => {
                       this.text = value;
-                      await this.onFillText(value);
+                      await this.onFillTextPreview();
                     }"/>
                   </div>
                   <div class="flex-space">
@@ -158,7 +145,7 @@
                   <div class="flex-space">
                     <el-input v-model="identifyTextAfter" rows="2" type="textarea" placeholder="译文" @input="async (value) => {
                       this.text = value;
-                      await this.onFillText();
+                      await this.onFillTextPreview();
                     }"/>
                   </div>
                 </div>
@@ -177,8 +164,9 @@
                     <div>字体选项：</div>
                     <div>
                       <el-select v-model="fontFamilyModel" placeholder="选择字体" size="small" filterable
+                                 @focus="onLocalFonts"
                                  @change="(val)=>{
-                        this.onFillText();
+                        this.onFillTextPreview();
                       }">
                         <el-option v-for="({family, fullName}, index) in fontFamilyList" :key="index" :label="fullName"
                                    :value="family"/>
@@ -191,7 +179,7 @@
                       <el-input-number v-model="fontSizeModel" size="small" :min="9" :max="99"
                                        controls-position="right" @change="(val)=>{
                                          this.fontSizeModel = val;
-                        this.onFillText();
+                        this.onFillTextPreview();
                       }"/>
                     </div>
                   </div>
@@ -201,7 +189,7 @@
                       <el-color-picker v-model="fontColorModel" size="small" show-alpha
                                        :predefine="predefineColors"
                                        @focus="onFontColor" @change="(val)=>{
-                        this.onFillText();
+                        this.onFillTextPreview();
                       }"/>
                     </div>
                   </div>
@@ -210,7 +198,7 @@
                     <div>
                       <el-select v-model="fontWeightModel" placeholder="选择字体粗细" size="small" filterable
                                  @change="(val)=>{
-                        this.onFillText();
+                        this.onFillTextPreview();
                       }">
                         <el-option v-for="(fontWeight, index) in fontWeights" :key="index" :label="fontWeight"
                                    :value="fontWeight"/>
@@ -230,7 +218,7 @@
                 </template>
                 <div>
                   <div>
-                    <el-button type="primary" size="small" style="width: calc(100% - 22px);">
+                    <el-button type="primary" size="small" style="width: calc(100% - 22px);" @click="onUpload">
                       上&nbsp;传
                       <el-icon class="el-icon--right">
                         <Upload/>
@@ -277,25 +265,18 @@ export default {
       clipCanvasInstance: null,
       drawContextInstance: null,
 
+      screenshotStartPoint: {},
+      screenshotRangeArea: {},
 
-      clipCanvasStartPoint: {},
-      clipCanvasStartPointFillText: {},
-      clipCanvasEndPoint: {},
-      clipCanvasArea: {},
-
-      base64Image: '',
-
-      hasDragging: false,
+      base64ImageData: null,
 
       text: '',
 
-      x: 50,
-      y: 50,
-      fontFamily: 'Microsoft YaHei',
+      isDrag: false,
+      x: 0,
+      y: 0,
       dragStartX: 0,
       dragStartY: 0,
-      drawContext: null,
-      clipArea: null,
 
       // ------------------- 右侧数据模型 -------------------
       loading: false,
@@ -390,16 +371,16 @@ export default {
       this.drawCanvasInstance = this.$refs['drawCanvas'];
       this.drawCanvasInstance.width = this.imageWidth;
       this.drawCanvasInstance.height = this.imageHeight;
-      this.clipContextInstance = this.drawCanvasInstance.getContext("2d", {willReadFrequently: true});
-      this.clipContextInstance.scale(1, 1);
-      this.clipContextInstance.drawImage(this.imageInstance, 0, 0);
+      this.drawContextInstance = this.drawCanvasInstance.getContext("2d", {willReadFrequently: true});
+      this.drawContextInstance.scale(1, 1);
+      this.drawContextInstance.drawImage(this.imageInstance, 0, 0);
 
       this.clipCanvasInstance = this.$refs['clipCanvas'];
       this.clipCanvasInstance.width = this.imageWidth;
       this.clipCanvasInstance.height = this.imageHeight;
-      this.drawContextInstance = this.clipCanvasInstance.getContext("2d", {willReadFrequently: true});
-      this.drawContextInstance.scale(1, 1);
-      this.drawContextInstance.fillStyle = '#00000069';
+      this.clipContextInstance = this.clipCanvasInstance.getContext("2d", {willReadFrequently: true});
+      this.clipContextInstance.scale(1, 1);
+      this.clipContextInstance.fillStyle = '#00000069';
 
       this.clipCanvasInstance.onmousedown = this.onMouseDown;
       this.clipCanvasInstance.onmousemove = this.onMuseMove;
@@ -407,59 +388,44 @@ export default {
     },
     onMouseDown(e) {
       if (this.hasScreenshot) {
-        // this.drawContextInstance.save();
-        this.clipCanvasStartPoint = {
+        this.screenshotStartPoint = {
           x: e.offsetX,
           y: e.offsetY
         };
-        this.clipCanvasStartPointFillText = this.clipCanvasStartPoint;
       }
       if (this.hasDrag) {
-        // if (e.button === 0) { // 左键单击
-        //   let x = e.offsetX - this.clipCanvasInstance.offsetLeft; // 获取鼠标相对于Canvas的x坐标
-        //   let y = e.offsetY - this.clipCanvasInstance.offsetTop; // 获取鼠标相对于Canvas的y坐标
-        //   this.hasDragging = true;
-        //   this.clipCanvasStartPoint = {
-        //     x: x,
-        //     y: y
-        //   };
-        //   this.clipCanvasStartPointFillText = this.clipCanvasStartPoint;
-        //
-        // }
-        if (e.button === 0) { // 左键单击
-          this.hasDragging = true;
-          this.dragStartX = e.offsetX - this.clipCanvasInstance.offsetLeft;
-          this.dragStartY = e.offsetY - this.clipCanvasInstance.offsetTop;
-        }
+        this.isDrag = true;
+        this.dragStartX = e.offsetX - this.clipCanvasInstance.offsetLeft;
+        this.dragStartY = e.offsetY - this.clipCanvasInstance.offsetTop;
       }
     },
     onMuseMove(e) {
       if (this.hasScreenshot) {
-        if (Object.getOwnPropertyNames(this.clipCanvasStartPoint).length === 0 && Object.getOwnPropertySymbols(this.clipCanvasStartPoint).length === 0) {
+        if (Object.getOwnPropertyNames(this.screenshotStartPoint).length === 0 && Object.getOwnPropertySymbols(this.screenshotStartPoint).length === 0) {
           // this.$message.warning('起始区域空');
         } else {
-          let x = this.clipCanvasStartPoint.x;
-          let y = this.clipCanvasStartPoint.y;
-          let w = e.offsetX - this.clipCanvasStartPoint.x;
-          let h = e.offsetY - this.clipCanvasStartPoint.y;
-          this.drawContextInstance.clearRect(0, 0, this.imageWidth, this.imageHeight);
-          this.drawContextInstance.beginPath();
+          let x = this.screenshotStartPoint.x;
+          let y = this.screenshotStartPoint.y;
+          let w = e.offsetX - this.screenshotStartPoint.x;
+          let h = e.offsetY - this.screenshotStartPoint.y;
+          this.clipContextInstance.clearRect(0, 0, this.imageWidth, this.imageHeight);
+          this.clipContextInstance.beginPath();
           //遮罩层
-          this.drawContextInstance.globalCompositeOperation = "source-over";
-          this.drawContextInstance.fillRect(0, 0, this.imageWidth, this.imageHeight);
+          this.clipContextInstance.globalCompositeOperation = "source-over";
+          this.clipContextInstance.fillRect(0, 0, this.imageWidth, this.imageHeight);
           //画框
-          this.drawContextInstance.globalCompositeOperation = 'destination-out';
-          this.drawContextInstance.fillRect(x, y, w, h);
+          this.clipContextInstance.globalCompositeOperation = 'destination-out';
+          this.clipContextInstance.fillRect(x, y, w, h);
           //描边
-          this.drawContextInstance.globalCompositeOperation = "source-over";
-          this.drawContextInstance.moveTo(x, y);
-          this.drawContextInstance.lineTo(x + w, y);
-          this.drawContextInstance.lineTo(x + w, y + h);
-          this.drawContextInstance.lineTo(x, y + h);
-          this.drawContextInstance.lineTo(x, y);
-          this.drawContextInstance.closePath();
-          this.drawContextInstance.stroke();
-          this.clipCanvasArea = {
+          this.clipContextInstance.globalCompositeOperation = "source-over";
+          this.clipContextInstance.moveTo(x, y);
+          this.clipContextInstance.lineTo(x + w, y);
+          this.clipContextInstance.lineTo(x + w, y + h);
+          this.clipContextInstance.lineTo(x, y + h);
+          this.clipContextInstance.lineTo(x, y);
+          this.clipContextInstance.closePath();
+          this.clipContextInstance.stroke();
+          this.screenshotRangeArea = {
             x,
             y,
             w,
@@ -467,129 +433,90 @@ export default {
           };
         }
       }
-      if (this.hasDrag) {
-        if (this.hasDragging) {
-          let mouseX = e.offsetX - this.clipCanvasInstance.offsetLeft; // 获取鼠标相对于Canvas的x坐标
-          let mouseY = e.offsetY - this.clipCanvasInstance.offsetTop; // 获取鼠标相对于Canvas的y坐标
+      if (this.hasDrag && this.isDrag) {
+        let mouseX = e.offsetX - this.clipCanvasInstance.offsetLeft; // 获取鼠标相对于Canvas的x坐标
+        let mouseY = e.offsetY - this.clipCanvasInstance.offsetTop; // 获取鼠标相对于Canvas的y坐标
 
-          this.x += mouseX - this.dragStartX;
-          this.y += mouseY - this.dragStartY;
-          this.dragStartX = mouseX;
-          this.dragStartY = mouseY;
+        let deltaX = mouseX - this.dragStartX;
+        let deltaY = mouseY - this.dragStartY;
+        this.x += deltaX;
+        this.y += deltaY;
+        this.dragStartX = mouseX;
+        this.dragStartY = mouseY;
 
-          this.onFillText();
-        }
+        this.onFillTextPreview();
       }
     },
     async onMouseUp(e) {
       if (this.hasScreenshot) {
-        if (Object.getOwnPropertyNames(this.clipCanvasStartPoint).length === 0 && Object.getOwnPropertySymbols(this.clipCanvasStartPoint).length === 0) {
+        if (Object.getOwnPropertyNames(this.screenshotStartPoint).length === 0 && Object.getOwnPropertySymbols(this.screenshotStartPoint).length === 0) {
           this.$message.warning('起始区域空');
         } else {
-          if (Object.getOwnPropertyNames(this.clipCanvasArea).length === 0 && Object.getOwnPropertySymbols(this.clipCanvasArea).length === 0) {
+          if (Object.getOwnPropertyNames(this.screenshotRangeArea).length === 0 && Object.getOwnPropertySymbols(this.screenshotRangeArea).length === 0) {
             this.$message.warning('未选中区域');
           } else {
             let canvas = document.createElement("canvas");
-            canvas.width = this.clipCanvasArea.w;
-            canvas.height = this.clipCanvasArea.h;
-            if (this.clipCanvasArea.x && this.clipCanvasArea.y && this.clipCanvasArea.w && this.clipCanvasArea.h) {
-              let data = this.clipContextInstance.getImageData(this.clipCanvasArea.x, this.clipCanvasArea.y, this.clipCanvasArea.w, this.clipCanvasArea.h);
+            canvas.width = this.screenshotRangeArea.w;
+            canvas.height = this.screenshotRangeArea.h;
+            if (this.screenshotRangeArea.x && this.screenshotRangeArea.y && this.screenshotRangeArea.w && this.screenshotRangeArea.h) {
+              let imageData = this.drawContextInstance.getImageData(this.screenshotRangeArea.x, this.screenshotRangeArea.y, this.screenshotRangeArea.w, this.screenshotRangeArea.h);
               let context = canvas.getContext("2d");
               context.scale(1, 1);
-              context.putImageData(data, 0, 0);
-              this.base64Image = canvas.toDataURL("image/png", 1.0);
-              await this.fetchOcrText(this.base64Image);
-              // this.drawContextInstance.restore();
+              context.putImageData(imageData, 0, 0);
+              let base64Image = canvas.toDataURL("image/png", 1.0);
+              await this.fetchOcrText(base64Image);
+
+              let rgbAster = await this.fetchRgbAster(base64Image);
+              this.drawContextInstance.fillStyle = rgbAster[0]['color']; // 填充颜色
+              this.drawContextInstance.fillRect(this.screenshotRangeArea.x, this.screenshotRangeArea.y, this.screenshotRangeArea.w, this.screenshotRangeArea.h);
             } else {
               this.$message.warning('画布未选中！');
             }
           }
         }
-        this.clipCanvasEndPoint = {
-          x: e.offsetX,
-          y: e.offsetY
-        };
+
+        this.x = this.screenshotStartPoint.x;
+        this.y = this.screenshotStartPoint.y;
+        this.screenshotStartPoint = {};
       }
       if (this.hasDrag) {
-        this.hasDragging = false;
+        this.isDrag = false;
       }
     },
-    async onFillText() {
-      await this.onClearCanvas();
-
-      this.drawContextInstance.fillStyle = this.fontColorModel;
-      this.drawContextInstance.font = `normal ${this.fontWeightModel} ${this.fontSizeModel}px ${this.fontFamilyModel}`;
-
-      let txtList = [];
-      let str = "";
-      for (let i = 0, len = this.text.length; i < len; i++) {
-        str += this.text.charAt(i);
-        if (this.drawContextInstance.measureText(str).width > this.clipCanvasArea.w - this.clipCanvasArea.x) {
-          txtList.push(str.substring(0, str.length - 1))
-          str = ""
-          i--
-        }
-      }
-      let h = 48;
-      if (txtList && txtList.length > 0) {
-        for (let index in txtList) {
-          h += 48;
-          // this.drawContextInstance.fillText(txt, this.clipCanvasStartPointFillText.x, this.clipCanvasStartPointFillText.y);
-          this.drawContextInstance.fillText(txtList[index], this.x, this.y + h);
-        }
+    async onFillTextPreview() {
+      this.onClearShape();
+      this.clipContextInstance.fillStyle = this.fontColorModel;
+      this.clipContextInstance.font = `normal ${this.fontWeightModel} ${this.fontSizeModel}px ${this.fontFamilyModel}`;
+      if (this.isDrag || Object.getOwnPropertyNames(this.screenshotStartPoint).length === 0 && Object.getOwnPropertySymbols(this.screenshotStartPoint).length === 0) {
+        this.clipContextInstance.fillText(this.text, this.x, this.y);
       } else {
-        this.drawContextInstance.fillText(this.text, this.x, this.y + h);
+        this.clipContextInstance.fillText(this.text, this.screenshotRangeArea.x, this.screenshotRangeArea.y);
       }
-
-      this.drawContextInstance.fillStyle = '#00000069';
+      // this.clipContextInstance.fillStyle = '#00000069';
     },
-    async onClearCanvas() {
-      if (this.base64Image) {
-        let rgbAster = await this.fetchRgbAster(this.base64Image);
-        this.clipContextInstance.fillStyle = rgbAster[0]['color']; // 填充颜色
-        this.clipContextInstance.fillRect(this.clipCanvasArea.x, this.clipCanvasArea.y, this.clipCanvasArea.w, this.clipCanvasArea.h); // 透明无填充；x，y，width,height
-        this.clipContextInstance.stroke();//相当于完成提交
-      }
-      this.drawContextInstance.clearRect(0, 0, this.imageWidth, this.imageHeight); // 清空画布
-      this.clipCanvasStartPoint = {};
-      // this.clipCanvasStartPointFillText = {};
-      this.base64Image = '';
+    onClearShape() {
+      this.clipContextInstance.clearRect(0, 0, this.imageWidth, this.imageHeight);
     },
     async fetchOcrText(base64Image) {
-      let str = "";
       if (this.hasIdentify) {
         const res = await ocrApi.fetchOcrText({'image': base64Image});
-        str = res.data;
+        this.text = res.data;
       } else {
-        const result = await Tesseract.recognize(base64Image, 'kor', {
-          // logger: m => console.log(m)
-        });
-        str = result.data.text;
+        const res = await Tesseract.recognize(base64Image, 'kor', {});
+        this.text = res.data.text;
       }
-      if (str) {
-        // 去掉所有的换行符
-        str = str.replace(/\r\n/g, "")
-        str = str.replace(/\n/g, "");
-        // 去掉所有的空格（中文空格、英文空格都会被替换）
-        str = str.replace(/\s/g, "");
-        this.identifyTextBefore = str;
-        this.text = this.identifyTextBefore;
-        await this.onFillText();
-        await this.fetchTranslateText(this.identifyTextBefore);
-        this.hasScreenshot = false;
-      } else {
-        // this.$message.warning('识别的内容空！');
-        await this.onClearCanvas();
-      }
+      this.identifyTextBefore = this.text;
+      await this.onFillTextPreview();
+      await this.fetchTranslateText(this.identifyTextBefore);
     },
     async fetchTranslateText(text) {
       if (this.hasTranslate) {
         const res = await translateApi.fetchTranslateText({'text': text});
         const result = JSON.parse(res.data.result)['trans_result'];
-        // this.identifyTextBefore = result[0]['src'];
+        this.identifyTextBefore = result[0]['src'];
         this.identifyTextAfter = result[0]['dst'];
         this.text = this.identifyTextAfter;
-        await this.onFillText();
+        await this.onFillTextPreview();
       }
     },
     async fetchRgbAster(base64Image) {
@@ -612,11 +539,37 @@ export default {
         try {
           const res = await eyeDropper.open(); // 开始拾取颜色
           this.fontColorModel = res.sRGBHex;
-          this.onFillText();
+          this.onFillTextPreview();
         } catch (e) {
           this.$message.success("用户取消了取色");
         }
       }
+    },
+    async onLocalFonts() {
+      if (!window.queryLocalFonts) {
+        this.$message.warning("你的浏览器不支持 queryLocalFonts API");
+      } else {
+        const localFamilyFonts = await window.queryLocalFonts();
+        let has = {};
+        this.fontFamilyList = localFamilyFonts.reduce(function (arr, item) {
+          !has[item.family] && (has[item.family] = arr.push(item));
+          return arr;
+        }, []);
+      }
+    },
+    onUpload() {
+      this.drawContextInstance.drawImage(this.clipCanvasInstance, 0, 0);
+      let base64 = this.drawCanvasInstance.toDataURL("image/png", 1.0);
+      console.log(base64);
+      console.log(
+          "%c ",
+          `background-image: url(${base64});
+   background-size: contain;
+   background-repeat: no-repeat;
+   padding: 200px;
+  `
+      );
+      this.onClearShape();
     },
 
     async initialize() {
@@ -629,21 +582,6 @@ export default {
       this.comicChaptersPictures = this.comicChaptersOptions[0]['comicPictures'];
       // 初始化 画布图片区域
       await this.onProtractCanvas(this.comicChaptersPictures[0].url);
-
-      // 初始化 系统相应字体
-      let _this = this;
-      this.$nextTick(async function () {
-        if (!window.queryLocalFonts) {
-          _this.$message.warning("你的浏览器不支持 queryLocalFonts API");
-        } else {
-          const localFamilyFonts = await window.queryLocalFonts();
-          let has = {};
-          _this.fontFamilyList = localFamilyFonts.reduce(function (arr, item) {
-            !has[item.family] && (has[item.family] = arr.push(item));
-            return arr;
-          }, []);
-        }
-      });
     }
   },
   mounted() {
