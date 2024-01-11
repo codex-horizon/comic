@@ -16,4 +16,9 @@ public class OssDto implements Serializable {
     })
     private String image;
 
+    @NotEmpty(message = "uri 空", groups = {
+            GroupValidator.Oss.class
+    })
+    private String uri;
+
 }

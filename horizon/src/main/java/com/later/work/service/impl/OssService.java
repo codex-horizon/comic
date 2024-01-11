@@ -2,16 +2,17 @@ package com.later.work.service.impl;
 
 import com.aliyun.oss.OSS;
 import com.aliyun.oss.OSSClientBuilder;
+import com.aliyun.oss.model.ObjectMetadata;
+import com.aliyun.oss.model.PutObjectRequest;
 import com.later.core.configurer.CommonConfigurer;
 import com.later.work.service.IOssService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayInputStream;
-import java.io.InputStream;
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.util.Base64;
 
+@Slf4j
 @Service
 public class OssService implements IOssService {
 
@@ -21,18 +22,37 @@ public class OssService implements IOssService {
         this.commonConfigurer = commonConfigurer;
     }
 
+    /**
+     * https://ram.console.aliyun.com/manage/ak?spm=a2c8b.12215514.top-nav.dak.5aba336a0aWFl6
+     */
     @Override
-    public String upload(String imageBase64) {
-        OSS ossClient = new OSSClientBuilder().build(commonConfigurer.getAlibabaOssEndpoint(), commonConfigurer.getAlibabaOssAccessKey(), commonConfigurer.getAlibabaOssAccessSecret());
-        InputStream streamBody = new ByteArrayInputStream(
-                Base64.getDecoder().decode(
-                        imageBase64.replace("data:image/png;base64,", "")
-                )
+    public String upload(String imageBase64, String uri) {
+        OSS ossClient = new OSSClientBuilder().build(
+                commonConfigurer.getAlibabaOssEndpoint(),
+                commonConfigurer.getAlibabaOssAccessKey(),
+                commonConfigurer.getAlibabaOssAccessSecret()
         );
         String bucketName = "img-fm1100";
-        String filename = "";
-        String currentDay = DateTimeFormatter.ofPattern("yyyyMMdd").format(LocalDate.now());
-        ossClient.putObject(bucketName, filename, streamBody);
-        return "https://" + bucketName + "." + commonConfigurer.getAlibabaOssEndpoint() + "/" + filename;
+        String objectName = "copy/" + uri;
+        try {
+
+            PutObjectRequest putObjectRequest = new PutObjectRequest(bucketName, objectName, new ByteArrayInputStream(
+                    Base64.getDecoder().decode(
+                            imageBase64.replace("data:image/png;base64,", "")
+                    )
+            ));
+            ObjectMetadata metadata = new ObjectMetadata();
+            metadata.setHeader("x-oss-forbid-overwrite", Boolean.FALSE);
+            putObjectRequest.setMetadata(metadata);
+
+            ossClient.putObject(putObjectRequest);
+        } catch (Exception e) {
+            log.error(e.getMessage());
+        } finally {
+            if (ossClient != null) {
+                ossClient.shutdown();
+            }
+        }
+        return objectName;
     }
 }

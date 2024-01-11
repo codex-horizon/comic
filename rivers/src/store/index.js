@@ -3,7 +3,7 @@ import {createStore} from 'vuex';
 import messengerStore from './modules/messengerStore.js';
 
 export default createStore({
-    strict: process.env.NODE_ENV !== 'production',
+    strict: /*process.env.NODE_ENV !== 'production'*/false,
     namespaced: true,
     state() {
         return {

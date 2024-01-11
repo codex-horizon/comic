@@ -1,5 +1,5 @@
 export default {
-    strict: process.env.NODE_ENV !== 'production',
+    strict: /*process.env.NODE_ENV !== 'production'*/false,
     namespaced: true,
     state: {
         inlineStyleScrollbar: {

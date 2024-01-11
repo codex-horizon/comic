@@ -22,7 +22,7 @@ public class OssController {
 
     @RequestMapping(name = "文件上传oss", path = "/upload", method = RequestMethod.POST)
     IResult<String> upload(@RequestBody @Validated(GroupValidator.Oss.class) OssDto ossDto) {
-        return IResult.Result.succeeded(iOssService.upload(ossDto.getImage()));
+        return IResult.Result.succeeded(iOssService.upload(ossDto.getImage(), ossDto.getUri()));
     }
 
 

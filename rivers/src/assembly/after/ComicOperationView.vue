@@ -33,7 +33,7 @@
                 <el-carousel-item v-for="({url}, index) in comicChaptersPictures" :key="index">
                   <div>
                     <el-image :src="`http://image.fm1100.com/${url}`"
-                              :preview-src-list="[`http://image.fm1100.com/${url}`]"
+                              :preview-src-list="[`http://image.fm1100.com/${url}`, `http://image.fm1100.com/${url.replace('copy/', '')}`]"
                               :zoom-rate="1.2"
                               :max-scale="7"
                               :min-scale="0.2"
@@ -237,7 +237,7 @@
 </template>
 <script>
 import Tesseract from "tesseract.js";
-import {ocrApi, translateApi} from "@/api";
+import {ocrApi, translateApi, ossApi} from "@/api";
 import rgbaster from "rgbaster";
 
 export default {
@@ -329,7 +329,9 @@ export default {
       ],
 
       fontWeightModel: '400',
-      fontWeights: ['100', '200', '300', '400', '500', '600', '700', '800', '900',]
+      fontWeights: ['100', '200', '300', '400', '500', '600', '700', '800', '900'],
+
+      comicChaptersPictureURI: ''
     }
   },
   methods: {
@@ -363,6 +365,7 @@ export default {
     },
     async onProtractCanvas(comicChaptersPictureURI) {
       this.loading = true;
+      this.comicChaptersPictureURI = comicChaptersPictureURI
       let image = await this.initImage(comicChaptersPictureURI);
       console.log(image);
       this.imageWidth = this.imageInstance.naturalWidth;
@@ -487,12 +490,13 @@ export default {
       this.onClearShape();
       this.clipContextInstance.fillStyle = this.fontColorModel;
       this.clipContextInstance.font = `normal ${this.fontWeightModel} ${this.fontSizeModel}px ${this.fontFamilyModel}`;
+      this.clipContextInstance.textAlign = 'center';
       if (this.isDrag || Object.getOwnPropertyNames(this.screenshotStartPoint).length === 0 && Object.getOwnPropertySymbols(this.screenshotStartPoint).length === 0) {
         this.clipContextInstance.fillText(this.text, this.x, this.y);
       } else {
         this.clipContextInstance.fillText(this.text, this.screenshotRangeArea.x, this.screenshotRangeArea.y);
       }
-      // this.clipContextInstance.fillStyle = '#00000069';
+      this.clipContextInstance.fillStyle = '#00000069';
     },
     onClearShape() {
       this.clipContextInstance.clearRect(0, 0, this.imageWidth, this.imageHeight);
@@ -557,10 +561,9 @@ export default {
         }, []);
       }
     },
-    onUpload() {
+    async onUpload() {
       this.drawContextInstance.drawImage(this.clipCanvasInstance, 0, 0);
       let base64 = this.drawCanvasInstance.toDataURL("image/png", 1.0);
-      console.log(base64);
       console.log(
           "%c ",
           `background-image: url(${base64});
@@ -570,6 +573,14 @@ export default {
   `
       );
       this.onClearShape();
+      let res = await ossApi.upload({'image': base64, 'uri': this.comicChaptersPictureURI});
+      for (let comicChaptersPicture of this.comicChaptersPictures) {
+        if (comicChaptersPicture['url'] === this.comicChaptersPictureURI) {
+          comicChaptersPicture['url'] = res.data;
+          this.comicChaptersPictureURI = comicChaptersPicture['url'];
+        }
+      }
+      await this.initImage(this.comicChaptersPictureURI);
     },
 
     async initialize() {
@@ -615,9 +626,6 @@ export default {
       :deep(.el-select) {
         width: 100%;
         height: 100%;
-        display: flex;
-        justify-content: center;
-        align-items: center;
       }
 
       :deep(.el-select-dropdown__item) {
