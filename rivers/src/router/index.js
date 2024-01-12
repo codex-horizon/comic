@@ -15,7 +15,7 @@ import {getCookie, getSession} from "@/utils";
 
 const router = createRouter({
     strict: true,
-    history: createWebHashHistory(process.env.VUE_APP_CONTEXT_PATH),
+    history: createWebHashHistory(process.env.VUE_APP_ROUTER_PATH),
     routes: [
         {
             path: '/:pathMatch(.*)*',
