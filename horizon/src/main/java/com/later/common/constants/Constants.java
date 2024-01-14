@@ -63,6 +63,7 @@ public class Constants {
         Role_Exists("Role_Exists", "角色已存在"),
         Role_Not_Exists("Role_Not_Exists", "角色不存在"),
         Menu_Exists("Menu_Exists", "菜单已存在"),
+        Comic_Picture_Not_Exists("Comic_Picture_Not_Exists", "漫画章节图片不存在"),
 
         User_Not_Relevancy_Role("User_Not_Relevancy_Role", "用户未关联角色"),
 

@@ -4,7 +4,7 @@ spring:
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     name: horizon-${spring.profiles.active}-comic
-    url: jdbc:mysql://39.100.65.248:3306/${spring.datasource.name}?useUnicode=true&characterEncoding=UTF-8&useSSL=false&serverTimezone=Asia/Shanghai
+    url: jdbc:mysql://127.0.0.1:3306/${spring.datasource.name}?useUnicode=true&characterEncoding=UTF-8&useSSL=false&serverTimezone=Asia/Shanghai
     username: 'ENC(YB8koxeqKiv1bc1RdADJP4vFpQoob+bxyGdhMJPK594DWLDwEYxMcW4v41v6yvd5hMelAHdFCRCPV/IZk4xsr5nuUHIItN7mpq+vhQecdDfBJpR8PgYuTY/UdS8ABp4geWyUsbIThyvS1CwMCfMIWnikhhnex6rkC05Bmq41Yd0=)'
     password: 'ENC(NLKk9+hMNc4KLH6xYea2oBwvvlw+tXI6gELEe1an8vKlBBdW3/hpJO94dcYjlhjMJCbiJSDVdOcmxF2KRLzrw3Exj+E2fuYhKq141zPuPGj5muv428MN+Va7v3XRjuEWDy1HGdrTs0C7QZwpvuMowD4Ow727I9bDK5eiaVtgqm8=)'
   jpa:

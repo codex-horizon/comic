@@ -27,6 +27,12 @@ public class ComicPictureEntity extends AbstractPoEntity implements Serializable
     @Column(name = "url", columnDefinition = "varchar(256) comment '图片url地址'")
     private String url;
 
+    @Column(name = "last_modified_url", columnDefinition = "varchar(256) comment 'last_modified_url图片url地址'")
+    private String lastModifiedUrl;
+
+    @Column(name = "roll_back_record", columnDefinition = "int(11) comment '回滚记录图片url地址'")
+    private Integer rollBackRecord;
+
     @Column(name = "ypic", columnDefinition = "varchar(256) comment '源站地址'")
     private String ypic;
 

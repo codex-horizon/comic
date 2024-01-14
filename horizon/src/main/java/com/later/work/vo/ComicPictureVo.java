@@ -18,6 +18,10 @@ public class ComicPictureVo extends AbstractVoEntity implements Serializable {
 
     private String url;
 
+    private String lastModifiedUrl;
+
+    private int rollBackRecord;
+
     private String ypic;
 
     private Integer height;

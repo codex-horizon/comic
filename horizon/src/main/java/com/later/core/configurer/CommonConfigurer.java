@@ -48,6 +48,9 @@ public class CommonConfigurer implements Serializable {
     @Value(("${alibaba.oss.endpoint}"))
     private String alibabaOssEndpoint;
 
+    @Value(("${alibaba.oss.bucketName}"))
+    private String alibabaOssBucketName;
+
     @Value("${baidu.translate.accessKey}")
     private String baiduTranslateAccessKey;
 

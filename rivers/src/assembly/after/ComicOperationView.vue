@@ -30,10 +30,18 @@
             </div>
             <div class="scroll-picture">
               <el-carousel height="auto" :autoplay="false" indicator-position="none" @change="onComicChaptersPictures">
-                <el-carousel-item v-for="({url}, index) in comicChaptersPictures" :key="index">
+                <el-carousel-item v-for="({url, lastModifiedUrl}, index) in comicChaptersPictures" :key="index">
                   <div>
-                    <el-image :src="`http://image.fm1100.com/${url}`"
-                              :preview-src-list="[`http://image.fm1100.com/${url}`, `http://image.fm1100.com/${url.replace('copy/', '')}`]"
+                    <el-image v-if="lastModifiedUrl" :src="`http://image.fm1100.com/${lastModifiedUrl}`"
+                              :preview-src-list="[`http://image.fm1100.com/${lastModifiedUrl}`, `http://image.fm1100.com/${url}`]"
+                              :zoom-rate="1.2"
+                              :max-scale="7"
+                              :min-scale="0.2"
+                              fit="cover"
+                              :preview-teleported="true"
+                    />
+                    <el-image v-else :src="`http://image.fm1100.com/${url}`"
+                              :preview-src-list="[`http://image.fm1100.com/${url}`]"
                               :zoom-rate="1.2"
                               :max-scale="7"
                               :min-scale="0.2"
@@ -53,7 +61,7 @@
           <div class="operation-editor">
             <div class="editor-layout">
               <canvas ref="drawCanvas" id="drawCanvas"/>
-              <canvas ref="clipCanvas" id="clipCanvas"/>
+              <canvas ref="clipCanvas" id="clipCanvas" @contextmenu.prevent/>
             </div>
           </div>
           <div class="operation-function" v-loading="loading">
@@ -73,28 +81,20 @@
                                :format-tooltip="onSliderFormat"
                                show-input size="small"/>
                   </div>
-                </div>
-              </el-collapse-item>
-              <el-collapse-item name="2">
-                <template #title>
-                  <el-tag>
-                    <el-icon>
-                      <Printer/>
-                    </el-icon>
-                    <span class="collapse-text">图片识别翻译</span>
-                  </el-tag>
-                </template>
-                <div>
                   <div class="flex-space">
                     <div>
                       <el-switch v-model="hasScreenshot" inline-prompt
-                                 active-text="截图开启" inactive-text="截图关闭"/>
+                                 active-text="截图开启"
+                                 inactive-text="截图关闭"
+                                 disabled
+                      />
                     </div>
                     <div>
                       <el-switch
                           v-model="hasDrag" inline-prompt
                           active-text="移动开启"
                           inactive-text="移动关闭"
+                          disabled
                       />
                     </div>
                   </div>
@@ -148,18 +148,6 @@
                       await this.onFillTextPreview();
                     }"/>
                   </div>
-                </div>
-              </el-collapse-item>
-              <el-collapse-item name="3">
-                <template #title>
-                  <el-tag>
-                    <el-icon>
-                      <Operation/>
-                    </el-icon>
-                    <span class="collapse-text">译文自定操作</span>
-                  </el-tag>
-                </template>
-                <div>
                   <div class="flex-space">
                     <div>字体选项：</div>
                     <div>
@@ -205,25 +193,21 @@
                       </el-select>
                     </div>
                   </div>
-                </div>
-              </el-collapse-item>
-              <el-collapse-item name="4">
-                <template #title>
-                  <el-tag>
-                    <el-icon>
-                      <Check/>
-                    </el-icon>
-                    <span class="collapse-text">图片持久操作</span>
-                  </el-tag>
-                </template>
-                <div>
-                  <div>
-                    <el-button type="primary" size="small" style="width: calc(100% - 22px);" @click="onUpload">
-                      上&nbsp;传
-                      <el-icon class="el-icon--right">
-                        <Upload/>
-                      </el-icon>
-                    </el-button>
+                  <div class="flex-space">
+                    <el-button-group style="width: 100%;">
+                      <el-button type="primary" icon="RefreshLeft" size="small" @click="onRollBackRecord(true)"
+                                 style="width: calc(100% / 3);">
+                        撤&nbsp;回
+                      </el-button>
+                      <el-button type="primary" icon="Refresh" size="small" @click="onRecover"
+                                 style="width: calc(100% / 3);">
+                        恢&nbsp;复
+                      </el-button>
+                      <el-button type="primary" icon="FolderChecked" size="small" @click="onUpload"
+                                 style="width: calc(100% / 3);">
+                        保&nbsp;存
+                      </el-button>
+                    </el-button-group>
                   </div>
                 </div>
               </el-collapse-item>
@@ -251,7 +235,9 @@ export default {
       comicChaptersModel: '',
       comicChaptersOptions: [],
 
+
       // 章节轮播图片
+      comicChaptersPicturesId: null,
       comicChaptersPictures: [],
 
       // ------------------- 中间数据模型 -------------------
@@ -280,12 +266,12 @@ export default {
 
       // ------------------- 右侧数据模型 -------------------
       loading: false,
-      collapseActiveNameModel: '2',
+      collapseActiveNameModel: '1',
       transformScaleModel: 100,
       transformScale: 'scale(1, 1)',
 
-      hasScreenshot: false,
-      hasDrag: false,
+      hasScreenshot: true,
+      hasDrag: true,
 
       identifyTextBefore: '',
       hasIdentify: false,
@@ -331,7 +317,16 @@ export default {
       fontWeightModel: '400',
       fontWeights: ['100', '200', '300', '400', '500', '600', '700', '800', '900'],
 
-      comicChaptersPictureURI: ''
+      comicChaptersPictureURI: '',
+
+      rollBackRecord: 0
+    }
+  },
+  watch: {
+    text: async function (val, old) {
+      if (val !== '' ||  val !== old) {
+        await this.onRollBackRecord(false);
+      }
     }
   },
   methods: {
@@ -339,11 +334,22 @@ export default {
     onComicChapters(comicChapter) {
       this.comicChaptersModel = comicChapter.name;
       this.comicChaptersPictures = comicChapter.comicPictures;
-      this.onProtractCanvas(this.comicChaptersPictures[0].url);
+
+      this.comicChaptersPicturesId = this.comicChaptersPictures[0]['id'];
+      if (this.comicChaptersPictures[0]['lastModifiedUrl']) {
+        this.onProtractCanvas(this.comicChaptersPictures[0]['lastModifiedUrl']);
+      } else {
+        this.onProtractCanvas(this.comicChaptersPictures[0]['url']);
+      }
     },
     onComicChaptersPictures(index) {
       let comicChaptersPicture = this.comicChaptersPictures[index];
-      this.onProtractCanvas(comicChaptersPicture.url);
+      this.comicChaptersPicturesId = comicChaptersPicture['id'];
+      if (comicChaptersPicture['lastModifiedUrl']) {
+        this.onProtractCanvas(comicChaptersPicture['lastModifiedUrl']);
+      } else {
+        this.onProtractCanvas(comicChaptersPicture['url']);
+      }
     },
     // ------------------- 中间数据模型 -------------------
     initImage(comicChaptersPictureURI) {
@@ -357,6 +363,7 @@ export default {
           resolve(this.imageInstance);
         }
         this.imageInstance.onerror = () => {
+          debugger;
           reject(`'${this.imageInstance}' is failed to load.`);
         }
         this.imageInstance.crossOrigin = "Anonymous";
@@ -390,16 +397,20 @@ export default {
       this.clipCanvasInstance.onmouseup = this.onMouseUp;
     },
     onMouseDown(e) {
-      if (this.hasScreenshot) {
-        this.screenshotStartPoint = {
-          x: e.offsetX,
-          y: e.offsetY
-        };
+      if (e.button === 0) { // 这个是左键
+        if (this.hasScreenshot) {
+          this.screenshotStartPoint = {
+            x: e.offsetX,
+            y: e.offsetY
+          };
+        }
       }
-      if (this.hasDrag) {
-        this.isDrag = true;
-        this.dragStartX = e.offsetX - this.clipCanvasInstance.offsetLeft;
-        this.dragStartY = e.offsetY - this.clipCanvasInstance.offsetTop;
+      if (e.button === 2) { // 这个是右键
+        if (this.hasDrag) {
+          this.isDrag = true;
+          this.dragStartX = e.offsetX - this.clipCanvasInstance.offsetLeft;
+          this.dragStartY = e.offsetY - this.clipCanvasInstance.offsetTop;
+        }
       }
     },
     onMuseMove(e) {
@@ -451,43 +462,48 @@ export default {
       }
     },
     async onMouseUp(e) {
-      if (this.hasScreenshot) {
-        if (Object.getOwnPropertyNames(this.screenshotStartPoint).length === 0 && Object.getOwnPropertySymbols(this.screenshotStartPoint).length === 0) {
-          this.$message.warning('起始区域空');
-        } else {
-          if (Object.getOwnPropertyNames(this.screenshotRangeArea).length === 0 && Object.getOwnPropertySymbols(this.screenshotRangeArea).length === 0) {
-            this.$message.warning('未选中区域');
+      if (e.button === 0) { // 这个是左键
+        if (this.hasScreenshot) {
+          if (Object.getOwnPropertyNames(this.screenshotStartPoint).length === 0 && Object.getOwnPropertySymbols(this.screenshotStartPoint).length === 0) {
+            this.$message.warning('起始区域空');
           } else {
-            let canvas = document.createElement("canvas");
-            canvas.width = this.screenshotRangeArea.w;
-            canvas.height = this.screenshotRangeArea.h;
-            if (this.screenshotRangeArea.x && this.screenshotRangeArea.y && this.screenshotRangeArea.w && this.screenshotRangeArea.h) {
-              let imageData = this.drawContextInstance.getImageData(this.screenshotRangeArea.x, this.screenshotRangeArea.y, this.screenshotRangeArea.w, this.screenshotRangeArea.h);
-              let context = canvas.getContext("2d");
-              context.scale(1, 1);
-              context.putImageData(imageData, 0, 0);
-              let base64Image = canvas.toDataURL("image/png", 1.0);
-              await this.fetchOcrText(base64Image);
-
-              let rgbAster = await this.fetchRgbAster(base64Image);
-              this.drawContextInstance.fillStyle = rgbAster[0]['color']; // 填充颜色
-              this.drawContextInstance.fillRect(this.screenshotRangeArea.x, this.screenshotRangeArea.y, this.screenshotRangeArea.w, this.screenshotRangeArea.h);
+            if (Object.getOwnPropertyNames(this.screenshotRangeArea).length === 0 && Object.getOwnPropertySymbols(this.screenshotRangeArea).length === 0) {
+              this.$message.warning('未选中区域');
             } else {
-              this.$message.warning('画布未选中！');
+              let canvas = document.createElement("canvas");
+              canvas.width = this.screenshotRangeArea.w;
+              canvas.height = this.screenshotRangeArea.h;
+              if (this.screenshotRangeArea.x && this.screenshotRangeArea.y && this.screenshotRangeArea.w && this.screenshotRangeArea.h) {
+                let imageData = this.drawContextInstance.getImageData(this.screenshotRangeArea.x, this.screenshotRangeArea.y, this.screenshotRangeArea.w, this.screenshotRangeArea.h);
+                let context = canvas.getContext("2d");
+                context.scale(1, 1);
+                context.putImageData(imageData, 0, 0);
+                let base64Image = canvas.toDataURL("image/png", 1.0);
+                await this.fetchOcrText(base64Image);
+
+                let rgbAster = await this.fetchRgbAster(base64Image);
+                this.drawContextInstance.fillStyle = rgbAster[0]['color']; // 填充颜色
+                this.drawContextInstance.fillRect(this.screenshotRangeArea.x, this.screenshotRangeArea.y, this.screenshotRangeArea.w, this.screenshotRangeArea.h);
+              } else {
+                this.$message.warning('画布未选中！');
+              }
             }
           }
-        }
 
-        this.x = this.screenshotStartPoint.x;
-        this.y = this.screenshotStartPoint.y;
-        this.screenshotStartPoint = {};
+          this.x = this.screenshotStartPoint.x;
+          this.y = this.screenshotStartPoint.y;
+          this.screenshotStartPoint = {};
+        }
       }
-      if (this.hasDrag) {
-        this.isDrag = false;
+      if (e.button === 2) { // 这个是右键
+        if (this.hasDrag) {
+          this.isDrag = false;
+        }
       }
     },
     async onFillTextPreview() {
-      this.onClearShape();
+      this.clipContextInstance.clearRect(0, 0, this.imageWidth, this.imageHeight);
+
       this.clipContextInstance.fillStyle = this.fontColorModel;
       this.clipContextInstance.font = `normal ${this.fontWeightModel} ${this.fontSizeModel}px ${this.fontFamilyModel}`;
       this.clipContextInstance.textAlign = 'center';
@@ -496,10 +512,8 @@ export default {
       } else {
         this.clipContextInstance.fillText(this.text, this.screenshotRangeArea.x, this.screenshotRangeArea.y);
       }
+
       this.clipContextInstance.fillStyle = '#00000069';
-    },
-    onClearShape() {
-      this.clipContextInstance.clearRect(0, 0, this.imageWidth, this.imageHeight);
     },
     async fetchOcrText(base64Image) {
       if (this.hasIdentify) {
@@ -514,7 +528,7 @@ export default {
       await this.fetchTranslateText(this.identifyTextBefore);
     },
     async fetchTranslateText(text) {
-      if (this.hasTranslate) {
+      if (this.hasTranslate && text) {
         const res = await translateApi.fetchTranslateText({'text': text});
         const result = JSON.parse(res.data.result)['trans_result'];
         this.identifyTextBefore = result[0]['src'];
@@ -543,7 +557,7 @@ export default {
         try {
           const res = await eyeDropper.open(); // 开始拾取颜色
           this.fontColorModel = res.sRGBHex;
-          this.onFillTextPreview();
+          await this.onFillTextPreview();
         } catch (e) {
           this.$message.success("用户取消了取色");
         }
@@ -561,26 +575,128 @@ export default {
         }, []);
       }
     },
+    async onRollBackRecord(hasRollBackRecord) {
+      if (hasRollBackRecord) {
+        if (this.rollBackRecord === 0) {
+          this.$message.error('不可撤回！');
+        } else {
+          let uri = this.comicChaptersPictureURI.replace(/rollBackRecord\/[0-9]\//, "");
+          const finalURI = "rollBackRecord/" + --this.rollBackRecord + "/" + uri;
+          await this.onProtractCanvas(finalURI);
+          // await this.onFillTextPreview();
+        }
+      } else {
+        this.rollBackRecord++;
+        let canvas1 = document.createElement("canvas");
+        canvas1.width = this.imageWidth;
+        canvas1.height = this.imageHeight;
+        let context1 = canvas1.getContext("2d");
+        context1.scale(1, 1);
+        let t1 = this.drawContextInstance.getImageData(0, 0, this.imageWidth, this.imageHeight);
+        context1.putImageData(t1, 0, 0);
+        let base641 = canvas1.toDataURL("image/png", 1.0);
+        console.log("%c ", `background-image: url(${base641});
+                 background-size: contain;
+                 background-repeat: no-repeat;
+                 padding: 200px;`
+        );
+
+        let canvas2 = document.createElement("canvas");
+        canvas2.width = this.imageWidth;
+        canvas2.height = this.imageHeight;
+        let context2 = canvas2.getContext("2d");
+        context2.scale(1, 1);
+        let t2 = this.clipContextInstance.getImageData(0, 0, this.imageWidth, this.imageHeight);
+        context2.putImageData(t2, 0, 0);
+        let base642 = canvas2.toDataURL("image/png", 1.0);
+        console.log("%c ", `background-image: url(${base642});
+                 background-size: contain;
+                 background-repeat: no-repeat;
+                 padding: 200px;`
+        );
+
+
+        context1.drawImage(canvas2, 0, 0);
+        let base64 = canvas1.toDataURL("image/png", 1.0);
+
+        // this.drawContextInstance.drawImage(this.clipCanvasInstance, 0, 0);
+        // let base64 = this.drawCanvasInstance.toDataURL("image/png", 1.0);
+        // let base64 = canvas.toDataURL("image/png", 1.0);
+        console.log("%c ", `background-image: url(${base64});
+                 background-size: contain;
+                 background-repeat: no-repeat;
+                 padding: 200px;`
+        );
+        // this.identifyTextBefore = '';
+        // this.text = '';
+        // this.identifyTextAfter = '';
+        await ossApi.rollBackRecord(
+            {
+              'id': this.comicChaptersPicturesId,
+              'image': base64,
+              'uri': this.comicChaptersPictureURI,
+              'hasRollBackRecord': false
+            }
+        );
+      }
+    },
+    async onRecover() {
+      this.identifyTextBefore = '';
+      this.text = '';
+      this.identifyTextAfter = '';
+      this.rollBackRecord = 0;
+
+      let res = await ossApi.recover({
+        'id': this.comicChaptersPicturesId
+      });
+      if (res.code === 'Biz_Ok_Response') {
+        this.$message.success('恢复成功');
+        let lastModifiedUrl = res.data;
+        for (let comicChaptersPicture of this.comicChaptersPictures) {
+          if (comicChaptersPicture['url'] === this.comicChaptersPictureURI || comicChaptersPicture['lastModifiedUrl'] === this.comicChaptersPictureURI) {
+            comicChaptersPicture['lastModifiedUrl'] = lastModifiedUrl;
+            break;
+          }
+        }
+
+        await this.onProtractCanvas(lastModifiedUrl);
+        await this.onFillTextPreview();
+
+      }
+    },
     async onUpload() {
       this.drawContextInstance.drawImage(this.clipCanvasInstance, 0, 0);
       let base64 = this.drawCanvasInstance.toDataURL("image/png", 1.0);
-      console.log(
-          "%c ",
-          `background-image: url(${base64});
-   background-size: contain;
-   background-repeat: no-repeat;
-   padding: 200px;
-  `
+      console.log("%c ", `background-image: url(${base64});
+                 background-size: contain;
+                 background-repeat: no-repeat;
+                 padding: 200px;`
       );
-      this.onClearShape();
-      let res = await ossApi.upload({'image': base64, 'uri': this.comicChaptersPictureURI});
-      for (let comicChaptersPicture of this.comicChaptersPictures) {
-        if (comicChaptersPicture['url'] === this.comicChaptersPictureURI) {
-          comicChaptersPicture['url'] = res.data;
-          this.comicChaptersPictureURI = comicChaptersPicture['url'];
+      this.identifyTextBefore = '';
+      this.text = '';
+      this.identifyTextAfter = '';
+      this.rollBackRecord = 0;
+
+      let res = await ossApi.upload(
+          {
+            'id': this.comicChaptersPicturesId,
+            'image': base64,
+            'uri': this.comicChaptersPictureURI
+          }
+      );
+      if (res.code === 'Biz_Ok_Response') {
+        this.$message.success('保存成功');
+        let lastModifiedUrl = res.data;
+        for (let comicChaptersPicture of this.comicChaptersPictures) {
+          if (comicChaptersPicture['url'] === this.comicChaptersPictureURI || comicChaptersPicture['lastModifiedUrl'] === this.comicChaptersPictureURI) {
+            comicChaptersPicture['lastModifiedUrl'] = lastModifiedUrl;
+            break;
+          }
         }
+
+        await this.onProtractCanvas(lastModifiedUrl);
+        await this.onFillTextPreview();
       }
-      await this.initImage(this.comicChaptersPictureURI);
     },
 
     async initialize() {
@@ -591,8 +707,13 @@ export default {
       this.comicChaptersModel = this.comicChaptersOptions[0].name;
       // 初始化 章节轮播图片
       this.comicChaptersPictures = this.comicChaptersOptions[0]['comicPictures'];
+      this.comicChaptersPicturesId = this.comicChaptersPictures[0].id;
       // 初始化 画布图片区域
-      await this.onProtractCanvas(this.comicChaptersPictures[0].url);
+      if (this.comicChaptersPictures[0]['lastModifiedUrl']) {
+        await this.onProtractCanvas(this.comicChaptersPictures[0]['lastModifiedUrl']);
+      } else {
+        await this.onProtractCanvas(this.comicChaptersPictures[0].url);
+      }
     }
   },
   mounted() {
@@ -707,7 +828,7 @@ export default {
   }
 
   .operation-function {
-    flex: 0 0 300px;
+    flex: 0 0 369px;
     display: flex;
     flex-direction: column;
 

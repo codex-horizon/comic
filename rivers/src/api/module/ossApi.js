@@ -7,4 +7,14 @@ export const ossApi = {
             'Content-Type': 'application/json;charset=utf-8'
         });
     },
+    recover(data) {
+        return post('/oss/recover', '', data, {
+            'Content-Type': 'application/json;charset=utf-8'
+        });
+    },
+    rollBackRecord(data) {
+        return post('/oss/rollBackRecord', '', data, {
+            'Content-Type': 'application/json;charset=utf-8'
+        });
+    }
 };
